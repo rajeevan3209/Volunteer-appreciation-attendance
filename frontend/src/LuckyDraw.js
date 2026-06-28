@@ -7,14 +7,14 @@ const COLORS = [
 ];
 
 function getCanvasSize() {
-  return Math.min(520, window.innerWidth - 40);
+  return Math.min(480, window.innerWidth - 40);
 }
 
 export default function LuckyDraw() {
   const [allParticipants, setAllParticipants] = useState([]);
   const [wheel, setWheel] = useState([]);
   const [spinning, setSpinning] = useState(false);
-  const [winner, setWinner] = useState(null);
+  const [winners, setWinners] = useState([]); // newest first
   const [loading, setLoading] = useState(true);
   const [canvasSize, setCanvasSize] = useState(getCanvasSize());
   const canvasRef = useRef(null);
@@ -67,7 +67,6 @@ export default function LuckyDraw() {
       const startAngle = angle + i * arc;
       const endAngle = startAngle + arc;
 
-      // Segment fill
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, radius, startAngle, endAngle);
@@ -75,7 +74,6 @@ export default function LuckyDraw() {
       ctx.fillStyle = COLORS[i % COLORS.length];
       ctx.fill();
 
-      // Segment border
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, radius, startAngle, endAngle);
@@ -84,7 +82,6 @@ export default function LuckyDraw() {
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Name text
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(startAngle + arc / 2);
@@ -94,22 +91,11 @@ export default function LuckyDraw() {
       ctx.font = `600 ${fontSize}px -apple-system, sans-serif`;
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 3;
-      let displayName = name;
       const maxChars = Math.max(10, Math.floor(400 / participants.length));
-      if (displayName.length > maxChars) displayName = displayName.substring(0, maxChars - 1) + '…';
+      let displayName = name.length > maxChars ? name.substring(0, maxChars - 1) + '…' : name;
       ctx.fillText(displayName, radius - 14, fontSize / 3);
       ctx.restore();
     });
-
-    // Center circle
-    ctx.beginPath();
-    ctx.arc(cx, cy, 22, 0, 2 * Math.PI);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(cx, cy, 16, 0, 2 * Math.PI);
-    ctx.fillStyle = '#1b5e20';
-    ctx.fill();
 
     // Pointer arrow at top
     const pw = 14;
@@ -134,13 +120,10 @@ export default function LuckyDraw() {
   }, [wheel, drawWheel, canvasSize]);
 
   const spin = () => {
-    if (spinning || wheel.length === 0) return;
-    setSpinning(true);
-    setWinner(null);
+    if (spinning || wheel.length < 2) return;
 
-    const minRotations = 6;
-    const extraRotations = Math.random() * 6;
-    const totalRotation = (minRotations + extraRotations) * 2 * Math.PI;
+    setSpinning(true);
+    const totalRotation = (6 + Math.random() * 6) * 2 * Math.PI;
     const duration = 5000;
     const startTime = performance.now();
     const startAngle = spinAngleRef.current;
@@ -148,7 +131,6 @@ export default function LuckyDraw() {
     const animate = (now) => {
       const elapsed = now - startTime;
       const t = Math.min(elapsed / duration, 1);
-      // Ease out quint for satisfying deceleration
       const eased = 1 - Math.pow(1 - t, 5);
       const currentAngle = startAngle + totalRotation * eased;
       spinAngleRef.current = currentAngle;
@@ -157,14 +139,14 @@ export default function LuckyDraw() {
       if (t < 1) {
         animFrameRef.current = requestAnimationFrame(animate);
       } else {
-        // Pointer is at top of canvas (angle -PI/2 from unit circle)
-        // Segment 0 starts at `currentAngle`, pointer points "up" = 3*PI/2 (or -PI/2)
         const arc = (2 * Math.PI) / wheel.length;
         const norm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-        // How far around from segment 0's start to the pointer (top = 3PI/2)
         const pointerOffset = ((3 * Math.PI / 2) - norm + 2 * Math.PI) % (2 * Math.PI);
         const winnerIdx = Math.floor(pointerOffset / arc) % wheel.length;
-        setWinner(wheel[winnerIdx]);
+        const winnerName = wheel[winnerIdx];
+        // Add newest winner at top, remove from wheel
+        setWinners(prev => [winnerName, ...prev]);
+        setWheel(prev => prev.filter(p => p !== winnerName));
         setSpinning(false);
       }
     };
@@ -172,28 +154,22 @@ export default function LuckyDraw() {
     animFrameRef.current = requestAnimationFrame(animate);
   };
 
-  const removeWinner = () => {
-    setWheel(prev => prev.filter(p => p !== winner));
-    setWinner(null);
-  };
-
-  const keepAndSpinAgain = () => {
-    setWinner(null);
-  };
-
   const resetWheel = () => {
+    setWheel(allParticipants.filter(p => !winners.includes(p)));
+    spinAngleRef.current = 0;
+  };
+
+  const clearWinners = () => {
+    setWinners([]);
     setWheel(allParticipants);
-    setWinner(null);
     spinAngleRef.current = 0;
   };
 
   return (
     <div className="ld-app">
       <header className="ld-header">
-        <div>
-          <h1>Welcome to Volunteer Appreciation Dinner</h1>
-          <p>Pasir Ris West Community Centre · Lucky Draw</p>
-        </div>
+        <h1>Welcome to Volunteer Appreciation Dinner</h1>
+        <p>Pasir Ris West Community Centre · Lucky Draw</p>
       </header>
 
       <main className="ld-main">
@@ -205,52 +181,63 @@ export default function LuckyDraw() {
             <p className="ld-empty-sub">Mark attendance first before running the lucky draw.</p>
           </div>
         ) : (
-          <>
-            <div className="ld-meta">
-              <span className="ld-count">{wheel.length} on wheel</span>
-              {wheel.length < allParticipants.length && (
-                <button className="ld-btn-reset" onClick={resetWheel}>↺ Reset wheel</button>
+          <div className="ld-layout">
+            {/* Wheel column */}
+            <div className="ld-wheel-col">
+              <div className="ld-meta">
+                <span className="ld-count">{wheel.length} on wheel</span>
+                {wheel.length < allParticipants.length - winners.length && (
+                  <button className="ld-btn-text" onClick={resetWheel}>↺ Restore removed</button>
+                )}
+              </div>
+
+              <div className="ld-wheel-wrapper">
+                <canvas
+                  ref={canvasRef}
+                  width={canvasSize}
+                  height={canvasSize}
+                  className="ld-canvas"
+                />
+                {/* Spin button centred on wheel */}
+                <button
+                  className={`ld-spin-btn ${spinning ? 'spinning' : ''}`}
+                  onClick={spin}
+                  disabled={spinning || wheel.length < 2}
+                  style={{ width: canvasSize * 0.24, height: canvasSize * 0.24, fontSize: canvasSize * 0.055 }}
+                >
+                  {spinning ? '…' : '🎡 SPIN'}
+                </button>
+              </div>
+
+              {wheel.length === 0 && (
+                <div className="ld-all-drawn">🎊 All drawn! <button className="ld-btn-text" onClick={clearWinners}>Reset all</button></div>
               )}
             </div>
 
-            <div className="ld-wheel-wrapper">
-              <canvas
-                ref={canvasRef}
-                width={canvasSize}
-                height={canvasSize}
-                className="ld-canvas"
-              />
-            </div>
+            {/* Winners side panel */}
+            <div className="ld-winners-col">
+              <div className="ld-winners-header">
+                <h2>🏆 Winners</h2>
+                {winners.length > 0 && (
+                  <button className="ld-btn-text small" onClick={clearWinners}>Clear all</button>
+                )}
+              </div>
 
-            {wheel.length === 0 ? (
-              <div className="ld-all-drawn">
-                🎊 All participants have been drawn!
-                <button className="ld-btn-reset" onClick={resetWheel}>↺ Reset wheel</button>
-              </div>
-            ) : !winner ? (
-              <button
-                className="ld-spin-btn"
-                onClick={spin}
-                disabled={spinning || wheel.length < 2}
-              >
-                {spinning ? '🌀 Spinning…' : '🎡 SPIN'}
-              </button>
-            ) : (
-              <div className="ld-winner-card">
-                <div className="ld-winner-trophy">🏆</div>
-                <div className="ld-winner-label">🎉 Winner!</div>
-                <div className="ld-winner-name">{winner}</div>
-                <div className="ld-winner-actions">
-                  <button className="ld-btn-remove" onClick={removeWinner}>
-                    Remove from wheel
-                  </button>
-                  <button className="ld-btn-keep" onClick={keepAndSpinAgain}>
-                    Keep &amp; spin again
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
+              {winners.length === 0 ? (
+                <div className="ld-winners-empty">Spin the wheel to pick a winner!</div>
+              ) : (
+                <ol className="ld-winners-list">
+                  {winners.map((name, i) => (
+                    <li key={`${name}-${i}`} className={`ld-winner-item ${i === 0 ? 'latest' : ''}`}>
+                      <span className="ld-winner-rank">{i + 1}</span>
+                      <span className="ld-winner-name">{name}</span>
+                      {i === 0 && <span className="ld-new-badge">NEW</span>}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          </div>
         )}
       </main>
     </div>
