@@ -119,6 +119,8 @@ export default function LuckyDraw() {
     drawWheel(spinAngleRef.current, wheel);
   }, [wheel, drawWheel, canvasSize]);
 
+  const [currentWinner, setCurrentWinner] = useState(null);
+
   const spin = () => {
     if (spinning || wheel.length < 2) return;
 
@@ -143,15 +145,22 @@ export default function LuckyDraw() {
         const norm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         const pointerOffset = ((3 * Math.PI / 2) - norm + 2 * Math.PI) % (2 * Math.PI);
         const winnerIdx = Math.floor(pointerOffset / arc) % wheel.length;
-        const winnerName = wheel[winnerIdx];
-        // Add newest winner at top, remove from wheel
-        setWinners(prev => [winnerName, ...prev]);
-        setWheel(prev => prev.filter(p => p !== winnerName));
+        setCurrentWinner(wheel[winnerIdx]);
         setSpinning(false);
       }
     };
 
     animFrameRef.current = requestAnimationFrame(animate);
+  };
+
+  const removeWinner = () => {
+    setWinners(prev => [currentWinner, ...prev]);
+    setWheel(prev => prev.filter(p => p !== currentWinner));
+    setCurrentWinner(null);
+  };
+
+  const keepAndSpinAgain = () => {
+    setCurrentWinner(null);
   };
 
   const resetWheel = () => {
@@ -162,6 +171,7 @@ export default function LuckyDraw() {
   const clearWinners = () => {
     setWinners([]);
     setWheel(allParticipants);
+    setCurrentWinner(null);
     spinAngleRef.current = 0;
   };
 
@@ -181,6 +191,26 @@ export default function LuckyDraw() {
             <p className="ld-empty-sub">Mark attendance first before running the lucky draw.</p>
           </div>
         ) : (
+          {/* Winner popup */}
+          {currentWinner && (
+            <div className="ld-overlay">
+              <div className="ld-winner-popup">
+                <div className="ld-confetti">🎊</div>
+                <div className="ld-winner-trophy">🏆</div>
+                <div className="ld-winner-label">Winner!</div>
+                <div className="ld-winner-popup-name">{currentWinner}</div>
+                <div className="ld-winner-actions">
+                  <button className="ld-btn-remove" onClick={removeWinner}>
+                    Remove from wheel
+                  </button>
+                  <button className="ld-btn-keep" onClick={keepAndSpinAgain}>
+                    Keep &amp; spin again
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="ld-layout">
             {/* Wheel column */}
             <div className="ld-wheel-col">

@@ -251,6 +251,107 @@
   flex-shrink: 0;
 }
 
+/* Winner popup */
+.ld-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.ld-winner-popup {
+  background: white;
+  border-radius: 24px;
+  padding: 44px 40px 36px;
+  text-align: center;
+  box-shadow: 0 16px 60px rgba(0,0,0,0.28);
+  border: 3px solid #a5d6a7;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ld-confetti {
+  font-size: 2.2rem;
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: bounce 0.6s ease infinite alternate;
+}
+
+.ld-winner-trophy {
+  font-size: 3.5rem;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.ld-winner-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #388e3c;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.ld-winner-popup-name {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #1b5e20;
+  margin-bottom: 28px;
+  line-height: 1.25;
+}
+
+.ld-winner-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ld-btn-remove {
+  padding: 11px 20px;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.ld-btn-remove:hover { opacity: 0.88; }
+
+.ld-btn-keep {
+  padding: 11px 20px;
+  background: linear-gradient(135deg, #2e7d32, #43a047);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.ld-btn-keep:hover { opacity: 0.88; }
+
+@keyframes bounce {
+  from { transform: translateX(-50%) translateY(0); }
+  to   { transform: translateX(-50%) translateY(-8px); }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
 /* States */
 .ld-loading,
 .ld-empty-state {
