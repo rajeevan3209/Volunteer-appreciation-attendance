@@ -14,10 +14,11 @@ RUN mvn dependency:go-offline --no-transfer-progress
 COPY backend/src ./src
 COPY --from=frontend-build /app/frontend/build ./src/main/resources/static
 RUN mvn clean package -DskipTests --no-transfer-progress
+RUN find target -name "*.jar" -not -name "*.original" -exec cp {} target/app.jar \;
 
 # Stage 3: Runtime
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=backend-build /app/backend/target/attendance-app-*.jar app.jar
+COPY --from=backend-build /app/backend/target/app.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
