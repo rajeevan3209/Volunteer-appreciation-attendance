@@ -29,20 +29,34 @@ export default function LuckyDraw() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/attendance')
-      .then(r => r.json())
-      .then(data => {
-        const seen = new Set();
-        const unique = data.filter(a => {
-          if (seen.has(a.participantName)) return false;
-          seen.add(a.participantName);
-          return true;
-        }).map(a => ({ name: a.participantName, subCommittee: a.subCommittee }));
-        setAllParticipants(unique);
-        setWheel(unique);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    // Load attended participants AND existing winners in parallel
+    Promise.all([
+      fetch('/api/attendance').then(r => r.json()),
+      fetch('/api/lucky-draw').then(r => r.json()),
+    ]).then(([attendanceData, winnersData]) => {
+      // Build unique participants from attendance
+      const seen = new Set();
+      const unique = attendanceData.filter(a => {
+        if (seen.has(a.participantName)) return false;
+        seen.add(a.participantName);
+        return true;
+      }).map(a => ({ name: a.participantName, subCommittee: a.subCommittee }));
+
+      // Restore winners from DB (newest first)
+      const dbWinners = winnersData.map(w => ({
+        id: w.id,
+        name: w.participantName,
+        subCommittee: w.subCommittee,
+      }));
+
+      const winnerNames = new Set(dbWinners.map(w => w.name));
+
+      setAllParticipants(unique);
+      setWinners(dbWinners);
+      // Exclude already-drawn from wheel
+      setWheel(unique.filter(p => !winnerNames.has(p.name)));
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   const drawWheel = useCallback((angle, participants) => {
@@ -153,10 +167,23 @@ export default function LuckyDraw() {
     animFrameRef.current = requestAnimationFrame(animate);
   };
 
-  const removeWinner = () => {
-    setWinners(prev => [currentWinner, ...prev]);
-    setWheel(prev => prev.filter(p => p.name !== currentWinner.name));
-    setCurrentWinner(null);
+  const removeWinner = async () => {
+    try {
+      const res = await fetch('/api/lucky-draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          participantName: currentWinner.name,
+          subCommittee: currentWinner.subCommittee,
+        }),
+      });
+      const saved = await res.json();
+      setWinners(prev => [{ id: saved.id, name: saved.participantName, subCommittee: saved.subCommittee }, ...prev]);
+      setWheel(prev => prev.filter(p => p.name !== currentWinner.name));
+      setCurrentWinner(null);
+    } catch {
+      setCurrentWinner(null);
+    }
   };
 
   const keepAndSpinAgain = () => {
@@ -164,12 +191,13 @@ export default function LuckyDraw() {
   };
 
   const resetWheel = () => {
-    const winnerNames = winners.map(w => w.name);
-    setWheel(allParticipants.filter(p => !winnerNames.includes(p.name)));
+    const winnerNames = new Set(winners.map(w => w.name));
+    setWheel(allParticipants.filter(p => !winnerNames.has(p.name)));
     spinAngleRef.current = 0;
   };
 
-  const clearWinners = () => {
+  const clearWinners = async () => {
+    await fetch('/api/lucky-draw', { method: 'DELETE' });
     setWinners([]);
     setWheel(allParticipants);
     setCurrentWinner(null);
