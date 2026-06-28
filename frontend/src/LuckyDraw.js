@@ -291,9 +291,6 @@ export default function LuckyDraw() {
               <div className="ld-winners-col">
                 <div className="ld-winners-header">
                   <h2>🏆 Winners</h2>
-                  {winners.length > 0 && (
-                    <button className="ld-btn-text small" onClick={clearAll}>Clear all</button>
-                  )}
                 </div>
                 {winners.length === 0 ? (
                   <div className="ld-winners-empty">Spin the wheel to pick a winner!</div>
