@@ -4,6 +4,19 @@ import './TreePage.css';
 const API = '';
 const POLL_INTERVAL = 5000;
 
+const NAME_COLORS = [
+  '#c62828', // red
+  '#e53935',
+  '#f57f17', // amber
+  '#f9a825',
+  '#558b2f', // green
+  '#2e7d32',
+  '#1565c0', // blue
+  '#6a1b9a', // purple
+  '#00838f', // teal
+  '#d84315', // deep orange
+];
+
 // Canopy zone as an ellipse — tweak if tree image changes
 // Values are fractions of the container width/height
 const CANOPY = {
@@ -55,7 +68,8 @@ export default function TreePage() {
         const pos = findPosition(placedRef.current);
         placedRef.current.push(pos);
         knownIdsRef.current.add(a.id);
-        return { id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150 };
+        const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
+        return { id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150, color };
       });
 
       setNames(prev => [...prev, ...newNodes]);
@@ -89,6 +103,8 @@ export default function TreePage() {
                 left: `${n.x * 100}%`,
                 top: `${n.y * 100}%`,
                 animationDelay: `${n.delay}ms`,
+                color: n.color,
+                textShadow: `0 0 8px rgba(255,255,255,0.9), 0 0 2px rgba(255,255,255,0.6)`,
               }}
             >
               {n.name}
