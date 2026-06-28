@@ -5,6 +5,7 @@
   },
   "deploy": {
     "healthcheckPath": "/api/subcommittees",
+    "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE"
   }
 }

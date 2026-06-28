@@ -10,14 +10,14 @@ RUN npm run build
 FROM maven:3.9-eclipse-temurin-17 AS backend-build
 WORKDIR /app/backend
 COPY backend/pom.xml ./
-RUN mvn dependency:go-offline -q
+RUN mvn dependency:go-offline --no-transfer-progress
 COPY backend/src ./src
 COPY --from=frontend-build /app/frontend/build ./src/main/resources/static
-RUN mvn clean package -DskipTests -q
+RUN mvn clean package -DskipTests --no-transfer-progress
 
 # Stage 3: Runtime
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=backend-build /app/backend/target/attendance-app-1.0.0.jar app.jar
+COPY --from=backend-build /app/backend/target/attendance-app-*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
