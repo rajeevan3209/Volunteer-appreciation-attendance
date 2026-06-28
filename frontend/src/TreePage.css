@@ -52,13 +52,22 @@
   padding: 20px 16px 32px;
 }
 
-/* Tree container — names are positioned relative to this */
+/* Outer container — fullscreen target */
 .tree-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  user-select: none;
+}
+
+/* Inner wrapper — always sized to the image; names positioned here */
+.tree-inner {
   position: relative;
   display: inline-block;
   max-width: min(780px, 95vw);
   width: 100%;
-  user-select: none;
+  flex-shrink: 0;
 }
 
 .tree-img {
@@ -116,19 +125,25 @@
   transform: scale(1.1);
 }
 
-/* When the container itself is fullscreen */
+/* Fullscreen: outer container fills screen and centres inner */
 .tree-container:fullscreen {
   background: #e8f5e9;
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100vw;
-  height: 100vh;
+}
+
+/* Fullscreen: inner wrapper scales image to fill height */
+.tree-container:fullscreen .tree-inner {
   max-width: none;
+  width: auto;
+  height: 100vh;
 }
 
 .tree-container:fullscreen .tree-img {
-  max-height: 100vh;
+  height: 100vh;
   width: auto;
   max-width: 100vw;
 }

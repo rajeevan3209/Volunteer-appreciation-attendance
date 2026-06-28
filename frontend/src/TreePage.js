@@ -110,25 +110,27 @@ export default function TreePage() {
 
       <main className="tree-main">
         <div className="tree-container" ref={containerRef}>
-          <img src="/tree.png" alt="Tree" className="tree-img" draggable={false} />
-          <button className="tree-fullscreen-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
-            {isFullscreen ? '⊠' : '⤢'}
-          </button>
-          {names.map(n => (
-            <span
-              key={n.id}
-              className="tree-name"
-              style={{
-                left: `${n.x * 100}%`,
-                top: `${n.y * 100}%`,
-                animationDelay: `${n.delay}ms`,
-                color: n.color,
-                textShadow: `0 0 8px rgba(255,255,255,0.9), 0 0 2px rgba(255,255,255,0.6)`,
-              }}
-            >
-              {n.name}
-            </span>
-          ))}
+          <div className="tree-inner">
+            <img src="/tree.png" alt="Tree" className="tree-img" draggable={false} />
+            {names.map(n => (
+              <span
+                key={n.id}
+                className="tree-name"
+                style={{
+                  left: `${n.x * 100}%`,
+                  top: `${n.y * 100}%`,
+                  animationDelay: `${n.delay}ms`,
+                  color: n.color,
+                  textShadow: `0 0 8px rgba(255,255,255,0.9), 0 0 2px rgba(255,255,255,0.6)`,
+                }}
+              >
+                {n.name}
+              </span>
+            ))}
+            <button className="tree-fullscreen-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+              {isFullscreen ? '⊠' : '⤢'}
+            </button>
+          </div>
         </div>
       </main>
     </div>
