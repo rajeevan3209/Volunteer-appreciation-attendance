@@ -27,10 +27,10 @@ public class LuckyDrawEntry {
     private String subCommittee;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
     private Status status = Status.PENDING;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT NOW()")
     private LocalDateTime attendedAt;
 
     private LocalDateTime drawnAt;
