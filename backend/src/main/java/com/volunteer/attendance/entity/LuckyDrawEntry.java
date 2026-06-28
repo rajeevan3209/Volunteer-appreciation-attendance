@@ -33,6 +33,7 @@ public class LuckyDrawEntry {
     @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT NOW()")
     private LocalDateTime attendedAt;
 
+    @Column(nullable = true)
     private LocalDateTime drawnAt;
 
     @PrePersist
