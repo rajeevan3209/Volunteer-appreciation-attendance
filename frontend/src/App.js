@@ -100,13 +100,8 @@ export default function App() {
             <p className="thankyou-sub">
               Sit back and enjoy the Appreciation Day events!
             </p>
-            <button className="btn-primary btn-back" onClick={() => {
-              setThankYouName(null);
-              setSelectedSubCommittee('');
-              setSelectedParticipant(null);
-              setSearchText('');
-            }}>
-              Mark Another Attendance
+            <button className="btn-thumbs" onClick={() => window.close()} title="Close">
+              👍
             </button>
           </div>
         </div>

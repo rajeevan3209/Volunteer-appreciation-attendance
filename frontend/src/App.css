@@ -384,15 +384,17 @@
   font-style: italic;
 }
 
-.btn-back {
-  width: auto;
-  padding: 12px 28px;
-  font-size: 0.9rem;
-  opacity: 0.8;
+.btn-thumbs {
+  font-size: 3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s;
+  line-height: 1;
 }
 
-.btn-back:hover {
-  opacity: 1;
+.btn-thumbs:hover {
+  transform: scale(1.2);
 }
 
 /* Toast */
