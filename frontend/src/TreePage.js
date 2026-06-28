@@ -5,16 +5,15 @@ const API = '';
 const POLL_INTERVAL = 5000;
 
 const NAME_COLORS = [
-  '#c62828', // red
-  '#e53935',
-  '#f57f17', // amber
-  '#f9a825',
-  '#558b2f', // green
-  '#2e7d32',
-  '#1565c0', // blue
-  '#6a1b9a', // purple
-  '#00838f', // teal
-  '#d84315', // deep orange
+  '#e53935', // red
+  '#c62828', // dark red
+  '#ff1744', // bright red
+  '#fdd835', // yellow
+  '#f9a825', // dark yellow
+  '#ffee58', // light yellow
+  '#800000', // maroon
+  '#b71c1c', // maroon-red
+  '#8b0000', // dark maroon
 ];
 
 // Canopy zone as an ellipse — tweak if tree image changes
