@@ -1,0 +1,220 @@
+.ld-app {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+/* Header */
+.ld-header {
+  background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+  padding: 20px 24px;
+  box-shadow: 0 2px 12px rgba(46, 125, 50, 0.3);
+}
+
+.ld-header h1 {
+  color: white;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ld-header p {
+  color: rgba(255,255,255,0.82);
+  font-size: 0.875rem;
+  margin-top: 3px;
+}
+
+/* Main */
+.ld-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 16px 60px;
+  gap: 24px;
+}
+
+/* Meta row */
+.ld-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ld-count {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2e7d32;
+  background: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #c8e6c9;
+  box-shadow: 0 1px 4px rgba(46,125,50,0.08);
+}
+
+.ld-btn-reset {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2e7d32;
+  background: white;
+  border: 1.5px solid #c8e6c9;
+  border-radius: 20px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ld-btn-reset:hover {
+  background: #f1f8e9;
+}
+
+/* Wheel */
+.ld-wheel-wrapper {
+  position: relative;
+  filter: drop-shadow(0 8px 24px rgba(46, 125, 50, 0.25));
+}
+
+.ld-canvas {
+  display: block;
+  border-radius: 50%;
+}
+
+/* Spin button */
+.ld-spin-btn {
+  padding: 16px 56px;
+  background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 20px rgba(46, 125, 50, 0.4);
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.ld-spin-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(46, 125, 50, 0.5);
+}
+
+.ld-spin-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.ld-spin-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Winner card */
+.ld-winner-card {
+  background: white;
+  border-radius: 20px;
+  padding: 32px 36px;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(46, 125, 50, 0.18);
+  border: 2px solid #a5d6a7;
+  width: 100%;
+  max-width: 420px;
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ld-winner-trophy {
+  font-size: 3.5rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.ld-winner-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #388e3c;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ld-winner-name {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1b5e20;
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+
+.ld-winner-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ld-btn-remove {
+  padding: 11px 20px;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.ld-btn-remove:hover {
+  opacity: 0.88;
+}
+
+.ld-btn-keep {
+  padding: 11px 20px;
+  background: linear-gradient(135deg, #2e7d32, #43a047);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.ld-btn-keep:hover {
+  opacity: 0.88;
+}
+
+/* States */
+.ld-loading,
+.ld-empty-state,
+.ld-all-drawn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: #2e7d32;
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.ld-empty-sub {
+  font-size: 0.9rem;
+  color: #81c784;
+  font-weight: 400;
+}
+
+.ld-all-drawn {
+  font-size: 1.3rem;
+  font-weight: 700;
+  gap: 16px;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+@media (max-width: 480px) {
+  .ld-header h1 { font-size: 1.1rem; }
+  .ld-spin-btn { padding: 14px 40px; font-size: 1.1rem; }
+  .ld-winner-name { font-size: 1.3rem; }
+}
