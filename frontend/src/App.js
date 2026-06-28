@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 const API = '';
@@ -10,10 +10,10 @@ export default function App() {
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [attendanceLog, setAttendanceLog] = useState([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [thankYouName, setThankYouName] = useState(null);
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
-  const searchRef = useRef(null);
 
   useEffect(() => {
     fetch(`${API}/api/subcommittees`)
@@ -39,13 +39,6 @@ export default function App() {
       .catch(() => showToast('Failed to load participants', 'error'));
   }, [selectedSubCommittee]);
 
-  useEffect(() => {
-    fetch(`${API}/api/attendance`)
-      .then(r => r.json())
-      .then(setAttendanceLog)
-      .catch(() => {});
-  }, []);
-
   const filteredParticipants = participants.filter(p =>
     p.name.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -55,12 +48,9 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleMarkAttendance = async () => {
-    if (!selectedParticipant || !selectedSubCommittee) {
-      showToast('Please select a sub-committee and a participant.', 'error');
-      return;
-    }
+  const handleConfirmAttendance = async () => {
     setLoading(true);
+    setShowConfirm(false);
     try {
       const res = await fetch(`${API}/api/attendance`, {
         method: 'POST',
@@ -74,13 +64,7 @@ export default function App() {
       if (!res.ok) {
         showToast(data.error || 'Failed to mark attendance', 'error');
       } else {
-        setParticipants(prev =>
-          prev.map(p => p.name === selectedParticipant.name ? { ...p, attended: true } : p)
-        );
-        setAttendanceLog(prev => [data, ...prev]);
-        setSelectedParticipant(null);
-        setSearchText('');
-        showToast(`Attendance marked for ${data.participantName}!`);
+        setThankYouName(selectedParticipant.name);
       }
     } catch {
       showToast('Network error. Please try again.', 'error');
@@ -96,17 +80,39 @@ export default function App() {
     setShowDropdown(false);
   };
 
-  const handleSearchFocus = () => {
-    if (selectedSubCommittee) setShowDropdown(true);
-  };
-
-  const handleSearchChange = (e) => {
-    setSearchText(e.target.value);
-    setSelectedParticipant(null);
-    setShowDropdown(true);
-  };
-
   const attendedCount = participants.filter(p => p.attended).length;
+
+  // Thank you screen
+  if (thankYouName) {
+    return (
+      <div className="app">
+        <header className="header">
+          <h1>Welcome to Volunteer Appreciation Dinner</h1>
+          <p>Pasir Ris West Community Centre</p>
+        </header>
+        <div className="thankyou-wrapper">
+          <div className="thankyou-card">
+            <div className="thankyou-icon">🎉</div>
+            <h2 className="thankyou-name">{thankYouName}</h2>
+            <p className="thankyou-message">
+              Thank you for participating and serving the community.
+            </p>
+            <p className="thankyou-sub">
+              Sit back and enjoy the Appreciation Day events!
+            </p>
+            <button className="btn-primary btn-back" onClick={() => {
+              setThankYouName(null);
+              setSelectedSubCommittee('');
+              setSelectedParticipant(null);
+              setSearchText('');
+            }}>
+              Mark Another Attendance
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -114,11 +120,34 @@ export default function App() {
         <div className={`toast toast-${toast.type}`}>{toast.message}</div>
       )}
 
-      <header className="header">
-        <div className="header-content">
-          <h1>Volunteer Appreciation</h1>
-          <p>Mark Attendance</p>
+      {/* Confirmation Dialog */}
+      {showConfirm && (
+        <div className="overlay">
+          <div className="dialog">
+            <h3 className="dialog-title">Confirm Attendance</h3>
+            <div className="dialog-row">
+              <span className="dialog-label">Sub-Committee</span>
+              <span className="dialog-value">{selectedSubCommittee}</span>
+            </div>
+            <div className="dialog-row">
+              <span className="dialog-label">Participant</span>
+              <span className="dialog-value">{selectedParticipant?.name}</span>
+            </div>
+            <div className="dialog-actions">
+              <button className="btn-cancel" onClick={() => setShowConfirm(false)}>
+                Cancel
+              </button>
+              <button className="btn-primary btn-confirm" onClick={handleConfirmAttendance} disabled={loading}>
+                {loading ? 'Submitting...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
         </div>
+      )}
+
+      <header className="header">
+        <h1>Welcome to Volunteer Appreciation Dinner</h1>
+        <p>Pasir Ris West Community Centre</p>
       </header>
 
       <main className="main">
@@ -140,7 +169,7 @@ export default function App() {
             </select>
           </div>
 
-          <div className="form-group" ref={searchRef}>
+          <div className="form-group">
             <label htmlFor="participant">
               Participant Name
               {selectedSubCommittee && (
@@ -155,8 +184,8 @@ export default function App() {
                 type="text"
                 placeholder={selectedSubCommittee ? 'Search participant...' : 'Select a sub-committee first'}
                 value={searchText}
-                onChange={handleSearchChange}
-                onFocus={handleSearchFocus}
+                onChange={e => { setSearchText(e.target.value); setSelectedParticipant(null); setShowDropdown(true); }}
+                onFocus={() => { if (selectedSubCommittee) setShowDropdown(true); }}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                 disabled={!selectedSubCommittee}
                 className={`input ${selectedParticipant ? 'input-selected' : ''}`}
@@ -184,40 +213,12 @@ export default function App() {
 
           <button
             className="btn-primary"
-            onClick={handleMarkAttendance}
+            onClick={() => setShowConfirm(true)}
             disabled={!selectedParticipant || !selectedSubCommittee || loading}
           >
-            {loading ? 'Marking...' : 'Mark Attendance'}
+            Mark Attendance
           </button>
         </div>
-
-        {attendanceLog.length > 0 && (
-          <div className="card">
-            <h2 className="card-title">Attendance Log</h2>
-            <div className="log-table-wrapper">
-              <table className="log-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Sub-Committee</th>
-                    <th>Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendanceLog.map((a, i) => (
-                    <tr key={a.id}>
-                      <td>{i + 1}</td>
-                      <td>{a.participantName}</td>
-                      <td>{a.subCommittee}</td>
-                      <td>{new Date(a.markedAt).toLocaleTimeString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );
