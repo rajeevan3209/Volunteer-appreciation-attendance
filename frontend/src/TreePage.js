@@ -53,7 +53,9 @@ function findPosition(placed, attempts = 120) {
 }
 
 export default function TreePage() {
-  const [names, setNames] = useState([]); // [{ id, name, x, y, delay }]
+  const [names, setNames] = useState([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef(null); // [{ id, name, x, y, delay }]
   const placedRef = useRef([]);
   const knownIdsRef = useRef(new Set());
 
@@ -84,6 +86,20 @@ export default function TreePage() {
     return () => clearInterval(interval);
   }, [fetchNames]);
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
   return (
     <div className="tree-app">
       <header className="tree-header">
@@ -93,8 +109,11 @@ export default function TreePage() {
       </header>
 
       <main className="tree-main">
-        <div className="tree-container">
+        <div className="tree-container" ref={containerRef}>
           <img src="/tree.png" alt="Tree" className="tree-img" draggable={false} />
+          <button className="tree-fullscreen-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+            {isFullscreen ? '⊠' : '⤢'}
+          </button>
           {names.map(n => (
             <span
               key={n.id}
