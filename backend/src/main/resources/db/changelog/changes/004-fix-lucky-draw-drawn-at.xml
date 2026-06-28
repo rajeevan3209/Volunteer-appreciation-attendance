@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Drop NOT NULL on drawn_at if it exists — safe to run even if already nullable -->
+    <changeSet id="004-fix-lucky-draw-drawn-at" author="app">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="NO">
+                SELECT is_nullable
+                FROM information_schema.columns
+                WHERE table_name = 'lucky_draw'
+                  AND column_name = 'drawn_at'
+            </sqlCheck>
+        </preConditions>
+        <sql>ALTER TABLE lucky_draw ALTER COLUMN drawn_at DROP NOT NULL;</sql>
+        <rollback>ALTER TABLE lucky_draw ALTER COLUMN drawn_at SET NOT NULL;</rollback>
+    </changeSet>
+
+</databaseChangeLog>
