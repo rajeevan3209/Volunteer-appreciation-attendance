@@ -11,19 +11,19 @@ function getCanvasSize() {
 }
 
 export default function LuckyDraw() {
-  const [allParticipants, setAllParticipants] = useState([]);
-  const [wheel, setWheel] = useState([]);
+  const [wheel, setWheel] = useState([]);         // PENDING entries
+  const [winners, setWinners] = useState([]);     // WINNER entries (newest first)
   const [spinning, setSpinning] = useState(false);
-  const [winners, setWinners] = useState([]);
-  const [currentWinner, setCurrentWinner] = useState(null);
+  const [currentWinner, setCurrentWinner] = useState(null); // { id, name, subCommittee }
   const [toast, setToast] = useState(null);
-  const [removeLoading, setRemoveLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const wheelRef = useRef([]);  // always-current wheel ref for animation closure
   const [canvasSize, setCanvasSize] = useState(getCanvasSize());
+
   const canvasRef = useRef(null);
   const spinAngleRef = useRef(0);
   const animFrameRef = useRef(null);
+  const wheelRef = useRef([]);
 
   useEffect(() => {
     const onResize = () => setCanvasSize(getCanvasSize());
@@ -31,37 +31,31 @@ export default function LuckyDraw() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  useEffect(() => {
-    // Load attended participants AND existing winners in parallel
-    Promise.all([
-      fetch('/api/attendance').then(r => r.json()),
-      fetch('/api/lucky-draw').then(r => r.json()),
-    ]).then(([attendanceData, winnersData]) => {
-      // Build unique participants from attendance
-      const seen = new Set();
-      const unique = attendanceData.filter(a => {
-        if (seen.has(a.participantName)) return false;
-        seen.add(a.participantName);
-        return true;
-      }).map(a => ({ name: a.participantName, subCommittee: a.subCommittee }));
+  const showToast = (message, type = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
-      // Restore winners from DB (newest first)
-      const dbWinners = winnersData.map(w => ({
-        id: w.id,
-        name: w.participantName,
-        subCommittee: w.subCommittee,
-      }));
-
-      const winnerNames = new Set(dbWinners.map(w => w.name));
-
-      const remaining = unique.filter(p => !winnerNames.has(p.name));
-      setAllParticipants(unique);
-      setWinners(dbWinners);
-      setWheel(remaining);
-      wheelRef.current = remaining;
+  const loadData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/lucky-draw');
+      const all = await res.json();
+      const pending = all.filter(e => e.status === 'PENDING')
+                         .map(e => ({ id: e.id, name: e.participantName, subCommittee: e.subCommittee }));
+      const won = all.filter(e => e.status === 'WINNER')
+                     .sort((a, b) => new Date(b.drawnAt) - new Date(a.drawnAt))
+                     .map(e => ({ id: e.id, name: e.participantName, subCommittee: e.subCommittee }));
+      setWheel(pending);
+      wheelRef.current = pending;
+      setWinners(won);
+    } catch {
+      showToast('Failed to load lucky draw data.');
+    } finally {
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const drawWheel = useCallback((angle, participants) => {
     const canvas = canvasRef.current;
@@ -85,7 +79,7 @@ export default function LuckyDraw() {
     ctx.fillStyle = '#1b5e20';
     ctx.fill();
 
-    participants.forEach((name, i) => {
+    participants.forEach((p, i) => {
       const startAngle = angle + i * arc;
       const endAngle = startAngle + arc;
 
@@ -114,13 +108,12 @@ export default function LuckyDraw() {
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 3;
       const maxChars = Math.max(10, Math.floor(400 / participants.length));
-      const displayName = name.name.length > maxChars ? name.name.substring(0, maxChars - 1) + '…' : name.name;
+      const displayName = p.name.length > maxChars ? p.name.substring(0, maxChars - 1) + '…' : p.name;
       ctx.fillText(displayName, radius - 14, fontSize / 3);
       ctx.restore();
     });
 
-    const pw = 14;
-    const ph = 30;
+    const pw = 14, ph = 30;
     ctx.beginPath();
     ctx.moveTo(cx - pw, ph / 2);
     ctx.lineTo(cx + pw, ph / 2);
@@ -141,11 +134,6 @@ export default function LuckyDraw() {
     drawWheel(spinAngleRef.current, wheel);
   }, [wheel, drawWheel, canvasSize]);
 
-  const showToast = (message, type = 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
-  };
-
   const spin = () => {
     const currentWheel = wheelRef.current;
     if (spinning || currentWheel.length < 2) return;
@@ -161,7 +149,7 @@ export default function LuckyDraw() {
       const eased = 1 - Math.pow(1 - t, 5);
       const currentAngle = startAngle + totalRotation * eased;
       spinAngleRef.current = currentAngle;
-      drawWheel(currentAngle, currentWheel); // use snapshot from spin start
+      drawWheel(currentAngle, currentWheel);
 
       if (t < 1) {
         animFrameRef.current = requestAnimationFrame(animate);
@@ -169,8 +157,8 @@ export default function LuckyDraw() {
         const arc = (2 * Math.PI) / currentWheel.length;
         const norm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         const pointerOffset = ((3 * Math.PI / 2) - norm + 2 * Math.PI) % (2 * Math.PI);
-        const winnerIdx = Math.floor(pointerOffset / arc) % currentWheel.length;
-        setCurrentWinner(currentWheel[winnerIdx]);
+        const idx = Math.floor(pointerOffset / arc) % currentWheel.length;
+        setCurrentWinner(currentWheel[idx]);
         setSpinning(false);
       }
     };
@@ -178,60 +166,58 @@ export default function LuckyDraw() {
     animFrameRef.current = requestAnimationFrame(animate);
   };
 
-  const removeWinner = async () => {
-    setRemoveLoading(true);
+  // Accept winner — mark as WINNER in DB, add to winners panel, remove from wheel
+  const acceptWinner = async () => {
+    setActionLoading(true);
     try {
-      const res = await fetch('/api/lucky-draw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          participantName: currentWinner.name,
-          subCommittee: currentWinner.subCommittee,
-        }),
-      });
-      const saved = await res.json();
-      if (!res.ok) {
-        showToast(saved.error || 'Failed to save winner. Please try again.');
-        return;
-      }
-      // Success — update state and close popup
-      setWinners(prev => [{ id: saved.id, name: saved.participantName, subCommittee: saved.subCommittee }, ...prev]);
-      setWheel(prev => prev.filter(p => p.name !== currentWinner.name));
+      const res = await fetch(`/api/lucky-draw/${currentWinner.id}/accept`, { method: 'PATCH' });
+      if (!res.ok) { showToast('Failed to accept winner. Try again.'); return; }
+      setWinners(prev => [currentWinner, ...prev]);
+      setWheel(prev => prev.filter(p => p.id !== currentWinner.id));
       setCurrentWinner(null);
-    } catch (e) {
-      showToast('Network error. Could not save winner. Please try again.');
+      showToast(`${currentWinner.name} added to winners list!`, 'success');
+    } catch {
+      showToast('Network error. Could not accept winner.');
     } finally {
-      setRemoveLoading(false);
+      setActionLoading(false);
     }
   };
 
-  const keepAndSpinAgain = () => {
+  // Exclude — mark as EXCLUDED in DB, remove from wheel silently
+  const excludeFromDraw = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/lucky-draw/${currentWinner.id}/exclude`, { method: 'PATCH' });
+      if (!res.ok) { showToast('Failed to remove. Try again.'); return; }
+      setWheel(prev => prev.filter(p => p.id !== currentWinner.id));
+      setCurrentWinner(null);
+      showToast(`${currentWinner.name} removed from the draw.`, 'success');
+    } catch {
+      showToast('Network error. Could not remove from draw.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Spin again — don't change anything in DB or state
+  const spinAgain = () => {
     setCurrentWinner(null);
   };
 
-  const resetWheel = () => {
-    const winnerNames = new Set(winners.map(w => w.name));
-    const remaining = allParticipants.filter(p => !winnerNames.has(p.name));
-    setWheel(remaining);
-    spinAngleRef.current = 0;
-  };
-
-  const clearWinners = async () => {
+  const clearAll = async () => {
     try {
-      const res = await fetch('/api/lucky-draw', { method: 'DELETE' });
-      if (!res.ok) { showToast('Failed to clear winners.'); return; }
-      setWinners([]);
-      setWheel(allParticipants);
-      setCurrentWinner(null);
-      spinAngleRef.current = 0;
+      await fetch('/api/lucky-draw', { method: 'DELETE' });
+      await loadData();
+      showToast('Lucky draw reset.', 'success');
     } catch {
-      showToast('Network error. Could not clear winners.');
+      showToast('Failed to reset.');
     }
   };
 
   return (
     <div className="ld-app">
       {toast && <div className={`ld-toast ld-toast-${toast.type}`}>{toast.message}</div>}
+
       <header className="ld-header">
         <h1>Welcome to Volunteer Appreciation Dinner</h1>
         <p>Pasir Ris West Community Centre · Lucky Draw</p>
@@ -239,14 +225,15 @@ export default function LuckyDraw() {
 
       <main className="ld-main">
         {loading ? (
-          <div className="ld-loading">⏳ Loading participants…</div>
-        ) : allParticipants.length === 0 ? (
+          <div className="ld-loading">⏳ Loading lucky draw…</div>
+        ) : wheel.length === 0 && winners.length === 0 ? (
           <div className="ld-empty-state">
-            <p>No attended participants found.</p>
-            <p className="ld-empty-sub">Mark attendance first before running the lucky draw.</p>
+            <p>No participants in the lucky draw yet.</p>
+            <p className="ld-empty-sub">Participants are added when they mark their attendance.</p>
           </div>
         ) : (
           <>
+            {/* Winner popup */}
             {currentWinner && (
               <div className="ld-overlay">
                 <div className="ld-winner-popup">
@@ -256,11 +243,14 @@ export default function LuckyDraw() {
                   <div className="ld-winner-popup-name">{currentWinner.name}</div>
                   <div className="ld-winner-popup-sub">{currentWinner.subCommittee}</div>
                   <div className="ld-winner-actions">
-                    <button className="ld-btn-remove" onClick={removeWinner} disabled={removeLoading}>
-                      {removeLoading ? 'Saving…' : 'Remove from wheel'}
+                    <button className="ld-btn-accept" onClick={acceptWinner} disabled={actionLoading}>
+                      {actionLoading ? '…' : '✅ Accept Winner'}
                     </button>
-                    <button className="ld-btn-keep" onClick={keepAndSpinAgain}>
-                      Keep &amp; spin again
+                    <button className="ld-btn-exclude" onClick={excludeFromDraw} disabled={actionLoading}>
+                      ❌ Remove from Draw
+                    </button>
+                    <button className="ld-btn-keep" onClick={spinAgain} disabled={actionLoading}>
+                      🔄 Spin Again
                     </button>
                   </div>
                 </div>
@@ -268,21 +258,17 @@ export default function LuckyDraw() {
             )}
 
             <div className="ld-layout">
+              {/* Wheel column */}
               <div className="ld-wheel-col">
                 <div className="ld-meta">
                   <span className="ld-count">{wheel.length} on wheel</span>
-                  {wheel.length < allParticipants.length - winners.length && (
-                    <button className="ld-btn-text" onClick={resetWheel}>↺ Restore removed</button>
+                  {winners.length > 0 && (
+                    <button className="ld-btn-text" onClick={clearAll}>↺ Reset all</button>
                   )}
                 </div>
 
                 <div className="ld-wheel-wrapper">
-                  <canvas
-                    ref={canvasRef}
-                    width={canvasSize}
-                    height={canvasSize}
-                    className="ld-canvas"
-                  />
+                  <canvas ref={canvasRef} width={canvasSize} height={canvasSize} className="ld-canvas" />
                   <button
                     className={`ld-spin-btn ${spinning ? 'spinning' : ''}`}
                     onClick={spin}
@@ -295,30 +281,30 @@ export default function LuckyDraw() {
 
                 {wheel.length === 0 && (
                   <div className="ld-all-drawn">
-                    🎊 All drawn!
-                    <button className="ld-btn-text" onClick={clearWinners}>Reset all</button>
+                    🎊 All participants drawn!
+                    <button className="ld-btn-text" onClick={clearAll}>Reset all</button>
                   </div>
                 )}
               </div>
 
+              {/* Winners side panel */}
               <div className="ld-winners-col">
                 <div className="ld-winners-header">
                   <h2>🏆 Winners</h2>
                   {winners.length > 0 && (
-                    <button className="ld-btn-text small" onClick={clearWinners}>Clear all</button>
+                    <button className="ld-btn-text small" onClick={clearAll}>Clear all</button>
                   )}
                 </div>
-
                 {winners.length === 0 ? (
                   <div className="ld-winners-empty">Spin the wheel to pick a winner!</div>
                 ) : (
                   <ol className="ld-winners-list">
-                    {winners.map((name, i) => (
-                      <li key={`${name.name}-${i}`} className={`ld-winner-item ${i === 0 ? 'latest' : ''}`}>
+                    {winners.map((w, i) => (
+                      <li key={w.id} className={`ld-winner-item ${i === 0 ? 'latest' : ''}`}>
                         <span className="ld-winner-rank">{i + 1}</span>
                         <span className="ld-winner-info">
-                          <span className="ld-winner-name">{name.name}</span>
-                          <span className="ld-winner-sub">{name.subCommittee}</span>
+                          <span className="ld-winner-name">{w.name}</span>
+                          <span className="ld-winner-sub">{w.subCommittee}</span>
                         </span>
                         {i === 0 && <span className="ld-new-badge">NEW</span>}
                       </li>

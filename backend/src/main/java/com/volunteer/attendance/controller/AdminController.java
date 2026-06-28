@@ -1,7 +1,7 @@
 package com.volunteer.attendance.controller;
 
 import com.volunteer.attendance.repository.AttendanceRepository;
-import com.volunteer.attendance.repository.LuckyDrawWinnerRepository;
+import com.volunteer.attendance.repository.LuckyDrawRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,30 +15,23 @@ import java.util.Map;
 public class AdminController {
 
     private final AttendanceRepository attendanceRepository;
-    private final LuckyDrawWinnerRepository luckyDrawWinnerRepository;
+    private final LuckyDrawRepository luckyDrawRepository;
 
+    /** Clear all attendance + lucky draw so participants can re-register */
     @DeleteMapping("/attendance")
     public ResponseEntity<?> clearAllAttendance() {
         long count = attendanceRepository.count();
         attendanceRepository.deleteAll();
-        return ResponseEntity.ok(Map.of("message", "Cleared " + count + " attendance records"));
+        luckyDrawRepository.deleteAll();
+        return ResponseEntity.ok(Map.of("message", "Cleared " + count + " attendance records and reset lucky draw"));
     }
 
-    @DeleteMapping("/lucky-draw")
-    public ResponseEntity<?> clearLuckyDraw() {
-        long count = luckyDrawWinnerRepository.count();
-        luckyDrawWinnerRepository.deleteAll();
-        return ResponseEntity.ok(Map.of("message", "Cleared " + count + " lucky draw records"));
-    }
-
+    /** Full reset — attendance + lucky draw */
     @DeleteMapping("/all")
     public ResponseEntity<?> clearAll() {
         long attendance = attendanceRepository.count();
-        long lucky = luckyDrawWinnerRepository.count();
         attendanceRepository.deleteAll();
-        luckyDrawWinnerRepository.deleteAll();
-        return ResponseEntity.ok(Map.of(
-            "message", "Cleared " + attendance + " attendance and " + lucky + " lucky draw records"
-        ));
+        luckyDrawRepository.deleteAll();
+        return ResponseEntity.ok(Map.of("message", "Cleared " + attendance + " attendance records and all lucky draw data"));
     }
 }

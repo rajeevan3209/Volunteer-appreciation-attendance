@@ -12,7 +12,9 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LuckyDrawWinner {
+public class LuckyDrawEntry {
+
+    public enum Status { PENDING, WINNER, EXCLUDED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,11 +26,18 @@ public class LuckyDrawWinner {
     @Column(nullable = false)
     private String subCommittee;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    private Status status = Status.PENDING;
+
+    @Column(nullable = false)
+    private LocalDateTime attendedAt;
+
     private LocalDateTime drawnAt;
 
     @PrePersist
     protected void onCreate() {
-        drawnAt = LocalDateTime.now();
+        if (attendedAt == null) attendedAt = LocalDateTime.now();
+        if (status == null) status = Status.PENDING;
     }
 }
