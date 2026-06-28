@@ -1,0 +1,47 @@
+package com.volunteer.attendance.controller;
+
+import com.volunteer.attendance.entity.Attendance;
+import com.volunteer.attendance.service.AttendanceService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
+@CrossOrigin(origins = "*")
+public class AttendanceController {
+
+    private final AttendanceService attendanceService;
+
+    @GetMapping("/subcommittees")
+    public ResponseEntity<List<String>> getSubCommittees() {
+        return ResponseEntity.ok(attendanceService.getSubCommittees());
+    }
+
+    @GetMapping("/participants")
+    public ResponseEntity<List<Map<String, Object>>> getParticipants(
+            @RequestParam String subCommittee) {
+        return ResponseEntity.ok(attendanceService.getParticipantsBySubCommittee(subCommittee));
+    }
+
+    @PostMapping("/attendance")
+    public ResponseEntity<?> markAttendance(@RequestBody Map<String, String> body) {
+        try {
+            String participantName = body.get("participantName");
+            String subCommittee = body.get("subCommittee");
+            Attendance saved = attendanceService.markAttendance(participantName, subCommittee);
+            return ResponseEntity.ok(saved);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/attendance")
+    public ResponseEntity<List<Attendance>> getAllAttendance() {
+        return ResponseEntity.ok(attendanceService.getAllAttendance());
+    }
+}
