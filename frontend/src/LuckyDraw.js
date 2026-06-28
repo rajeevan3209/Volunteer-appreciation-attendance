@@ -262,9 +262,6 @@ export default function LuckyDraw() {
               <div className="ld-wheel-col">
                 <div className="ld-meta">
                   <span className="ld-count">{wheel.length} on wheel</span>
-                  {winners.length > 0 && (
-                    <button className="ld-btn-text" onClick={clearAll}>↺ Reset all</button>
-                  )}
                 </div>
 
                 <div className="ld-wheel-wrapper">
@@ -282,7 +279,6 @@ export default function LuckyDraw() {
                 {wheel.length === 0 && (
                   <div className="ld-all-drawn">
                     🎊 All participants drawn!
-                    <button className="ld-btn-text" onClick={clearAll}>Reset all</button>
                   </div>
                 )}
               </div>
