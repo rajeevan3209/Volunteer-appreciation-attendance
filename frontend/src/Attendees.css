@@ -199,6 +199,163 @@
   color: #1b5e20;
 }
 
+/* Admin panel */
+.att-admin-panel {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #ffcdd2;
+  padding: 16px 20px;
+  margin-bottom: 4px;
+}
+
+.att-admin-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #b71c1c;
+  margin-bottom: 12px;
+}
+
+.att-admin-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.att-admin-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.att-admin-btn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.att-admin-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.att-admin-btn.danger {
+  background: #c62828;
+  color: white;
+  border-color: #b71c1c;
+}
+
+.att-admin-btn.warning {
+  background: white;
+  color: #e65100;
+  border-color: #ffb74d;
+}
+
+/* Confirm overlay */
+.att-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.att-dialog {
+  background: white;
+  border-radius: 16px;
+  padding: 32px 28px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.2);
+  animation: attPopIn 0.2s ease;
+}
+
+.att-dialog-icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+.att-dialog-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 10px;
+}
+
+.att-dialog-msg {
+  font-size: 0.875rem;
+  color: #718096;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.att-dialog-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.att-dialog-cancel {
+  flex: 1;
+  padding: 11px;
+  background: white;
+  color: #555;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.att-dialog-cancel:hover { background: #f7fafc; }
+
+.att-dialog-confirm {
+  flex: 1;
+  padding: 11px;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.att-dialog-confirm:hover:not(:disabled) { opacity: 0.88; }
+.att-dialog-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Toast */
+.att-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  z-index: 300;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  animation: attSlideIn 0.25s ease;
+}
+.att-toast-success { background: #2e7d32; }
+.att-toast-error   { background: #c62828; }
+
+@keyframes attPopIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes attSlideIn {
+  from { transform: translateX(60px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
 @media (max-width: 480px) {
   .att-header-content h1 { font-size: 1.1rem; }
   .att-summary { gap: 16px; }

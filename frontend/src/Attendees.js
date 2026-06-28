@@ -8,6 +8,9 @@ export default function Attendees() {
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { type, message, action }
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const fetchAttendance = useCallback(async () => {
     setLoading(true);
@@ -17,25 +20,24 @@ export default function Attendees() {
       setAttendance(data);
       setLastRefreshed(new Date());
     } catch {
-      // silently retry on next refresh
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchAttendance();
-  }, [fetchAttendance]);
+  useEffect(() => { fetchAttendance(); }, [fetchAttendance]);
 
-  // Group by subCommittee
   const grouped = attendance.reduce((acc, a) => {
-    const key = a.subCommittee;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(a);
+    if (!acc[a.subCommittee]) acc[a.subCommittee] = [];
+    acc[a.subCommittee].push(a);
     return acc;
   }, {});
-
   const sortedGroups = Object.keys(grouped).sort();
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const handleExport = () => {
     const rows = attendance.map((a, i) => ({
@@ -50,20 +52,54 @@ export default function Attendees() {
     XLSX.writeFile(wb, 'attendance.xlsx');
   };
 
+  const handleConfirm = async () => {
+    if (!confirmDialog) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(confirmDialog.endpoint, { method: 'DELETE' });
+      const data = await res.json();
+      showToast(data.message);
+      await fetchAttendance();
+    } catch {
+      showToast('Something went wrong. Please try again.', 'error');
+    } finally {
+      setActionLoading(false);
+      setConfirmDialog(null);
+    }
+  };
+
   return (
     <div className="att-app">
+      {/* Toast */}
+      {toast && <div className={`att-toast att-toast-${toast.type}`}>{toast.message}</div>}
+
+      {/* Confirm Dialog */}
+      {confirmDialog && (
+        <div className="att-overlay">
+          <div className="att-dialog">
+            <div className="att-dialog-icon">{confirmDialog.icon}</div>
+            <h3 className="att-dialog-title">{confirmDialog.title}</h3>
+            <p className="att-dialog-msg">{confirmDialog.message}</p>
+            <div className="att-dialog-actions">
+              <button className="att-dialog-cancel" onClick={() => setConfirmDialog(null)} disabled={actionLoading}>
+                Cancel
+              </button>
+              <button className="att-dialog-confirm" onClick={handleConfirm} disabled={actionLoading}>
+                {actionLoading ? 'Clearing…' : 'Yes, Clear'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="att-header">
         <div className="att-header-content">
           <h1>Welcome to Volunteer Appreciation Dinner</h1>
-          <p>Pasir Ris West Community Centre</p>
+          <p>Pasir Ris West Community Centre · Admin</p>
         </div>
         <div className="att-header-actions">
-          <button className="att-btn-icon" onClick={fetchAttendance} title="Refresh">
-            ↺
-          </button>
-          <button className="att-btn-icon" onClick={handleExport} title="Export to Excel" disabled={attendance.length === 0}>
-            ⬇
-          </button>
+          <button className="att-btn-icon" onClick={fetchAttendance} title="Refresh">↺</button>
+          <button className="att-btn-icon" onClick={handleExport} title="Export to Excel" disabled={attendance.length === 0}>⬇</button>
         </div>
       </header>
 
@@ -79,10 +115,38 @@ export default function Attendees() {
             <span className="att-stat-label">Sub-Committees</span>
           </div>
           {lastRefreshed && (
-            <div className="att-refreshed">
-              Last updated: {lastRefreshed.toLocaleTimeString()}
-            </div>
+            <div className="att-refreshed">Last updated: {lastRefreshed.toLocaleTimeString()}</div>
           )}
+        </div>
+
+        {/* Admin Actions */}
+        <div className="att-admin-panel">
+          <div className="att-admin-label">⚙️ Admin Actions</div>
+          <div className="att-admin-actions">
+            <button
+              className="att-admin-btn danger"
+              onClick={() => setConfirmDialog({
+                icon: '🗑️',
+                title: 'Clear All Attendance',
+                message: `This will permanently delete all ${attendance.length} attendance records. Participants will be able to re-submit their attendance. This cannot be undone.`,
+                endpoint: '/api/admin/attendance',
+              })}
+              disabled={attendance.length === 0}
+            >
+              🗑️ Clear Attendance
+            </button>
+            <button
+              className="att-admin-btn warning"
+              onClick={() => setConfirmDialog({
+                icon: '⚠️',
+                title: 'Clear All Data',
+                message: 'This will delete ALL attendance records AND all lucky draw winners. Everything resets. This cannot be undone.',
+                endpoint: '/api/admin/all',
+              })}
+            >
+              ⚠️ Reset Everything
+            </button>
+          </div>
         </div>
 
         {loading ? (
