@@ -8,9 +8,13 @@ export default function Attendees() {
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState(null);
-  const [confirmDialog, setConfirmDialog] = useState(null); // { type, message, action }
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  const ADMIN_PIN = '1986';
 
   const fetchAttendance = useCallback(async () => {
     setLoading(true);
@@ -54,6 +58,10 @@ export default function Attendees() {
 
   const handleConfirm = async () => {
     if (!confirmDialog) return;
+    if (pin !== ADMIN_PIN) {
+      setPinError('Incorrect PIN. Please try again.');
+      return;
+    }
     setActionLoading(true);
     try {
       const res = await fetch(confirmDialog.endpoint, { method: 'DELETE' });
@@ -65,7 +73,15 @@ export default function Attendees() {
     } finally {
       setActionLoading(false);
       setConfirmDialog(null);
+      setPin('');
+      setPinError('');
     }
+  };
+
+  const handleOpenDialog = (dialog) => {
+    setPin('');
+    setPinError('');
+    setConfirmDialog(dialog);
   };
 
   return (
@@ -80,8 +96,25 @@ export default function Attendees() {
             <div className="att-dialog-icon">{confirmDialog.icon}</div>
             <h3 className="att-dialog-title">{confirmDialog.title}</h3>
             <p className="att-dialog-msg">{confirmDialog.message}</p>
+
+            <div className="att-pin-group">
+              <label className="att-pin-label">Enter Admin PIN to confirm</label>
+              <input
+                className={`att-pin-input ${pinError ? 'att-pin-error' : ''}`}
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="● ● ● ●"
+                value={pin}
+                onChange={e => { setPin(e.target.value); setPinError(''); }}
+                onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+                autoFocus
+              />
+              {pinError && <span className="att-pin-error-msg">{pinError}</span>}
+            </div>
+
             <div className="att-dialog-actions">
-              <button className="att-dialog-cancel" onClick={() => setConfirmDialog(null)} disabled={actionLoading}>
+              <button className="att-dialog-cancel" onClick={() => { setConfirmDialog(null); setPin(''); setPinError(''); }} disabled={actionLoading}>
                 Cancel
               </button>
               <button className="att-dialog-confirm" onClick={handleConfirm} disabled={actionLoading}>
@@ -125,7 +158,7 @@ export default function Attendees() {
           <div className="att-admin-actions">
             <button
               className="att-admin-btn danger"
-              onClick={() => setConfirmDialog({
+              onClick={() => handleOpenDialog({
                 icon: '🗑️',
                 title: 'Clear All Attendance',
                 message: `This will permanently delete all ${attendance.length} attendance records. Participants will be able to re-submit their attendance. This cannot be undone.`,
@@ -137,7 +170,7 @@ export default function Attendees() {
             </button>
             <button
               className="att-admin-btn warning"
-              onClick={() => setConfirmDialog({
+              onClick={() => handleOpenDialog({
                 icon: '⚠️',
                 title: 'Clear All Data',
                 message: 'This will delete ALL attendance records AND all lucky draw winners. Everything resets. This cannot be undone.',
