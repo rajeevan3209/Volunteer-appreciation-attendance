@@ -375,6 +375,28 @@
   to   { transform: scale(1);    opacity: 1; }
 }
 
+/* Toast */
+.ld-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  z-index: 400;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  animation: ldSlideIn 0.25s ease;
+}
+.ld-toast-error   { background: #c62828; }
+.ld-toast-success { background: #2e7d32; }
+
+@keyframes ldSlideIn {
+  from { transform: translateX(60px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
 /* States */
 .ld-loading,
 .ld-empty-state {

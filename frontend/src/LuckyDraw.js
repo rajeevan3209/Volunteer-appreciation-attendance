@@ -16,7 +16,10 @@ export default function LuckyDraw() {
   const [spinning, setSpinning] = useState(false);
   const [winners, setWinners] = useState([]);
   const [currentWinner, setCurrentWinner] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [removeLoading, setRemoveLoading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const wheelRef = useRef([]);  // always-current wheel ref for animation closure
   const [canvasSize, setCanvasSize] = useState(getCanvasSize());
   const canvasRef = useRef(null);
   const spinAngleRef = useRef(0);
@@ -51,10 +54,11 @@ export default function LuckyDraw() {
 
       const winnerNames = new Set(dbWinners.map(w => w.name));
 
+      const remaining = unique.filter(p => !winnerNames.has(p.name));
       setAllParticipants(unique);
       setWinners(dbWinners);
-      // Exclude already-drawn from wheel
-      setWheel(unique.filter(p => !winnerNames.has(p.name)));
+      setWheel(remaining);
+      wheelRef.current = remaining;
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -133,11 +137,18 @@ export default function LuckyDraw() {
   }, []);
 
   useEffect(() => {
+    wheelRef.current = wheel;
     drawWheel(spinAngleRef.current, wheel);
   }, [wheel, drawWheel, canvasSize]);
 
+  const showToast = (message, type = 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
   const spin = () => {
-    if (spinning || wheel.length < 2) return;
+    const currentWheel = wheelRef.current;
+    if (spinning || currentWheel.length < 2) return;
     setSpinning(true);
     const totalRotation = (6 + Math.random() * 6) * 2 * Math.PI;
     const duration = 5000;
@@ -150,16 +161,16 @@ export default function LuckyDraw() {
       const eased = 1 - Math.pow(1 - t, 5);
       const currentAngle = startAngle + totalRotation * eased;
       spinAngleRef.current = currentAngle;
-      drawWheel(currentAngle, wheel);
+      drawWheel(currentAngle, currentWheel); // use snapshot from spin start
 
       if (t < 1) {
         animFrameRef.current = requestAnimationFrame(animate);
       } else {
-        const arc = (2 * Math.PI) / wheel.length;
+        const arc = (2 * Math.PI) / currentWheel.length;
         const norm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         const pointerOffset = ((3 * Math.PI / 2) - norm + 2 * Math.PI) % (2 * Math.PI);
-        const winnerIdx = Math.floor(pointerOffset / arc) % wheel.length;
-        setCurrentWinner(wheel[winnerIdx]); // { name, subCommittee }
+        const winnerIdx = Math.floor(pointerOffset / arc) % currentWheel.length;
+        setCurrentWinner(currentWheel[winnerIdx]);
         setSpinning(false);
       }
     };
@@ -168,6 +179,7 @@ export default function LuckyDraw() {
   };
 
   const removeWinner = async () => {
+    setRemoveLoading(true);
     try {
       const res = await fetch('/api/lucky-draw', {
         method: 'POST',
@@ -178,11 +190,18 @@ export default function LuckyDraw() {
         }),
       });
       const saved = await res.json();
+      if (!res.ok) {
+        showToast(saved.error || 'Failed to save winner. Please try again.');
+        return;
+      }
+      // Success — update state and close popup
       setWinners(prev => [{ id: saved.id, name: saved.participantName, subCommittee: saved.subCommittee }, ...prev]);
       setWheel(prev => prev.filter(p => p.name !== currentWinner.name));
       setCurrentWinner(null);
-    } catch {
-      setCurrentWinner(null);
+    } catch (e) {
+      showToast('Network error. Could not save winner. Please try again.');
+    } finally {
+      setRemoveLoading(false);
     }
   };
 
@@ -192,20 +211,27 @@ export default function LuckyDraw() {
 
   const resetWheel = () => {
     const winnerNames = new Set(winners.map(w => w.name));
-    setWheel(allParticipants.filter(p => !winnerNames.has(p.name)));
+    const remaining = allParticipants.filter(p => !winnerNames.has(p.name));
+    setWheel(remaining);
     spinAngleRef.current = 0;
   };
 
   const clearWinners = async () => {
-    await fetch('/api/lucky-draw', { method: 'DELETE' });
-    setWinners([]);
-    setWheel(allParticipants);
-    setCurrentWinner(null);
-    spinAngleRef.current = 0;
+    try {
+      const res = await fetch('/api/lucky-draw', { method: 'DELETE' });
+      if (!res.ok) { showToast('Failed to clear winners.'); return; }
+      setWinners([]);
+      setWheel(allParticipants);
+      setCurrentWinner(null);
+      spinAngleRef.current = 0;
+    } catch {
+      showToast('Network error. Could not clear winners.');
+    }
   };
 
   return (
     <div className="ld-app">
+      {toast && <div className={`ld-toast ld-toast-${toast.type}`}>{toast.message}</div>}
       <header className="ld-header">
         <h1>Welcome to Volunteer Appreciation Dinner</h1>
         <p>Pasir Ris West Community Centre · Lucky Draw</p>
@@ -230,8 +256,8 @@ export default function LuckyDraw() {
                   <div className="ld-winner-popup-name">{currentWinner.name}</div>
                   <div className="ld-winner-popup-sub">{currentWinner.subCommittee}</div>
                   <div className="ld-winner-actions">
-                    <button className="ld-btn-remove" onClick={removeWinner}>
-                      Remove from wheel
+                    <button className="ld-btn-remove" onClick={removeWinner} disabled={removeLoading}>
+                      {removeLoading ? 'Saving…' : 'Remove from wheel'}
                     </button>
                     <button className="ld-btn-keep" onClick={keepAndSpinAgain}>
                       Keep &amp; spin again
