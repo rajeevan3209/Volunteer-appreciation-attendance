@@ -14,7 +14,8 @@ export default function LuckyDraw() {
   const [allParticipants, setAllParticipants] = useState([]);
   const [wheel, setWheel] = useState([]);
   const [spinning, setSpinning] = useState(false);
-  const [winners, setWinners] = useState([]); // newest first
+  const [winners, setWinners] = useState([]);
+  const [currentWinner, setCurrentWinner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [canvasSize, setCanvasSize] = useState(getCanvasSize());
   const canvasRef = useRef(null);
@@ -51,13 +52,11 @@ export default function LuckyDraw() {
 
     ctx.clearRect(0, 0, size, size);
 
-    // Shadow ring
     ctx.beginPath();
     ctx.arc(cx, cy, radius + 6, 0, 2 * Math.PI);
     ctx.fillStyle = 'rgba(0,0,0,0.12)';
     ctx.fill();
 
-    // Outer ring
     ctx.beginPath();
     ctx.arc(cx, cy, radius + 4, 0, 2 * Math.PI);
     ctx.fillStyle = '#1b5e20';
@@ -92,12 +91,11 @@ export default function LuckyDraw() {
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 3;
       const maxChars = Math.max(10, Math.floor(400 / participants.length));
-      let displayName = name.length > maxChars ? name.substring(0, maxChars - 1) + '…' : name;
+      const displayName = name.length > maxChars ? name.substring(0, maxChars - 1) + '…' : name;
       ctx.fillText(displayName, radius - 14, fontSize / 3);
       ctx.restore();
     });
 
-    // Pointer arrow at top
     const pw = 14;
     const ph = 30;
     ctx.beginPath();
@@ -119,11 +117,8 @@ export default function LuckyDraw() {
     drawWheel(spinAngleRef.current, wheel);
   }, [wheel, drawWheel, canvasSize]);
 
-  const [currentWinner, setCurrentWinner] = useState(null);
-
   const spin = () => {
     if (spinning || wheel.length < 2) return;
-
     setSpinning(true);
     const totalRotation = (6 + Math.random() * 6) * 2 * Math.PI;
     const duration = 5000;
@@ -191,83 +186,84 @@ export default function LuckyDraw() {
             <p className="ld-empty-sub">Mark attendance first before running the lucky draw.</p>
           </div>
         ) : (
-          {/* Winner popup */}
-          {currentWinner && (
-            <div className="ld-overlay">
-              <div className="ld-winner-popup">
-                <div className="ld-confetti">🎊</div>
-                <div className="ld-winner-trophy">🏆</div>
-                <div className="ld-winner-label">Winner!</div>
-                <div className="ld-winner-popup-name">{currentWinner}</div>
-                <div className="ld-winner-actions">
-                  <button className="ld-btn-remove" onClick={removeWinner}>
-                    Remove from wheel
-                  </button>
-                  <button className="ld-btn-keep" onClick={keepAndSpinAgain}>
-                    Keep &amp; spin again
-                  </button>
+          <>
+            {currentWinner && (
+              <div className="ld-overlay">
+                <div className="ld-winner-popup">
+                  <div className="ld-confetti">🎊</div>
+                  <div className="ld-winner-trophy">🏆</div>
+                  <div className="ld-winner-label">Winner!</div>
+                  <div className="ld-winner-popup-name">{currentWinner}</div>
+                  <div className="ld-winner-actions">
+                    <button className="ld-btn-remove" onClick={removeWinner}>
+                      Remove from wheel
+                    </button>
+                    <button className="ld-btn-keep" onClick={keepAndSpinAgain}>
+                      Keep &amp; spin again
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="ld-layout">
-            {/* Wheel column */}
-            <div className="ld-wheel-col">
-              <div className="ld-meta">
-                <span className="ld-count">{wheel.length} on wheel</span>
-                {wheel.length < allParticipants.length - winners.length && (
-                  <button className="ld-btn-text" onClick={resetWheel}>↺ Restore removed</button>
+            <div className="ld-layout">
+              <div className="ld-wheel-col">
+                <div className="ld-meta">
+                  <span className="ld-count">{wheel.length} on wheel</span>
+                  {wheel.length < allParticipants.length - winners.length && (
+                    <button className="ld-btn-text" onClick={resetWheel}>↺ Restore removed</button>
+                  )}
+                </div>
+
+                <div className="ld-wheel-wrapper">
+                  <canvas
+                    ref={canvasRef}
+                    width={canvasSize}
+                    height={canvasSize}
+                    className="ld-canvas"
+                  />
+                  <button
+                    className={`ld-spin-btn ${spinning ? 'spinning' : ''}`}
+                    onClick={spin}
+                    disabled={spinning || wheel.length < 2}
+                    style={{ width: canvasSize * 0.24, height: canvasSize * 0.24, fontSize: canvasSize * 0.055 }}
+                  >
+                    {spinning ? '…' : '🎡 SPIN'}
+                  </button>
+                </div>
+
+                {wheel.length === 0 && (
+                  <div className="ld-all-drawn">
+                    🎊 All drawn!
+                    <button className="ld-btn-text" onClick={clearWinners}>Reset all</button>
+                  </div>
                 )}
               </div>
 
-              <div className="ld-wheel-wrapper">
-                <canvas
-                  ref={canvasRef}
-                  width={canvasSize}
-                  height={canvasSize}
-                  className="ld-canvas"
-                />
-                {/* Spin button centred on wheel */}
-                <button
-                  className={`ld-spin-btn ${spinning ? 'spinning' : ''}`}
-                  onClick={spin}
-                  disabled={spinning || wheel.length < 2}
-                  style={{ width: canvasSize * 0.24, height: canvasSize * 0.24, fontSize: canvasSize * 0.055 }}
-                >
-                  {spinning ? '…' : '🎡 SPIN'}
-                </button>
-              </div>
+              <div className="ld-winners-col">
+                <div className="ld-winners-header">
+                  <h2>🏆 Winners</h2>
+                  {winners.length > 0 && (
+                    <button className="ld-btn-text small" onClick={clearWinners}>Clear all</button>
+                  )}
+                </div>
 
-              {wheel.length === 0 && (
-                <div className="ld-all-drawn">🎊 All drawn! <button className="ld-btn-text" onClick={clearWinners}>Reset all</button></div>
-              )}
-            </div>
-
-            {/* Winners side panel */}
-            <div className="ld-winners-col">
-              <div className="ld-winners-header">
-                <h2>🏆 Winners</h2>
-                {winners.length > 0 && (
-                  <button className="ld-btn-text small" onClick={clearWinners}>Clear all</button>
+                {winners.length === 0 ? (
+                  <div className="ld-winners-empty">Spin the wheel to pick a winner!</div>
+                ) : (
+                  <ol className="ld-winners-list">
+                    {winners.map((name, i) => (
+                      <li key={`${name}-${i}`} className={`ld-winner-item ${i === 0 ? 'latest' : ''}`}>
+                        <span className="ld-winner-rank">{i + 1}</span>
+                        <span className="ld-winner-name">{name}</span>
+                        {i === 0 && <span className="ld-new-badge">NEW</span>}
+                      </li>
+                    ))}
+                  </ol>
                 )}
               </div>
-
-              {winners.length === 0 ? (
-                <div className="ld-winners-empty">Spin the wheel to pick a winner!</div>
-              ) : (
-                <ol className="ld-winners-list">
-                  {winners.map((name, i) => (
-                    <li key={`${name}-${i}`} className={`ld-winner-item ${i === 0 ? 'latest' : ''}`}>
-                      <span className="ld-winner-rank">{i + 1}</span>
-                      <span className="ld-winner-name">{name}</span>
-                      {i === 0 && <span className="ld-new-badge">NEW</span>}
-                    </li>
-                  ))}
-                </ol>
-              )}
             </div>
-          </div>
+          </>
         )}
       </main>
     </div>
