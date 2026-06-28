@@ -32,9 +32,14 @@ export default function LuckyDraw() {
     fetch('/api/attendance')
       .then(r => r.json())
       .then(data => {
-        const names = [...new Set(data.map(a => a.participantName))];
-        setAllParticipants(names);
-        setWheel(names);
+        const seen = new Set();
+        const unique = data.filter(a => {
+          if (seen.has(a.participantName)) return false;
+          seen.add(a.participantName);
+          return true;
+        }).map(a => ({ name: a.participantName, subCommittee: a.subCommittee }));
+        setAllParticipants(unique);
+        setWheel(unique);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -91,7 +96,7 @@ export default function LuckyDraw() {
       ctx.shadowColor = 'rgba(0,0,0,0.4)';
       ctx.shadowBlur = 3;
       const maxChars = Math.max(10, Math.floor(400 / participants.length));
-      const displayName = name.length > maxChars ? name.substring(0, maxChars - 1) + '…' : name;
+      const displayName = name.name.length > maxChars ? name.name.substring(0, maxChars - 1) + '…' : name.name;
       ctx.fillText(displayName, radius - 14, fontSize / 3);
       ctx.restore();
     });
@@ -140,7 +145,7 @@ export default function LuckyDraw() {
         const norm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
         const pointerOffset = ((3 * Math.PI / 2) - norm + 2 * Math.PI) % (2 * Math.PI);
         const winnerIdx = Math.floor(pointerOffset / arc) % wheel.length;
-        setCurrentWinner(wheel[winnerIdx]);
+        setCurrentWinner(wheel[winnerIdx]); // { name, subCommittee }
         setSpinning(false);
       }
     };
@@ -150,7 +155,7 @@ export default function LuckyDraw() {
 
   const removeWinner = () => {
     setWinners(prev => [currentWinner, ...prev]);
-    setWheel(prev => prev.filter(p => p !== currentWinner));
+    setWheel(prev => prev.filter(p => p.name !== currentWinner.name));
     setCurrentWinner(null);
   };
 
@@ -159,7 +164,8 @@ export default function LuckyDraw() {
   };
 
   const resetWheel = () => {
-    setWheel(allParticipants.filter(p => !winners.includes(p)));
+    const winnerNames = winners.map(w => w.name);
+    setWheel(allParticipants.filter(p => !winnerNames.includes(p.name)));
     spinAngleRef.current = 0;
   };
 
@@ -193,7 +199,8 @@ export default function LuckyDraw() {
                   <div className="ld-confetti">🎊</div>
                   <div className="ld-winner-trophy">🏆</div>
                   <div className="ld-winner-label">Winner!</div>
-                  <div className="ld-winner-popup-name">{currentWinner}</div>
+                  <div className="ld-winner-popup-name">{currentWinner.name}</div>
+                  <div className="ld-winner-popup-sub">{currentWinner.subCommittee}</div>
                   <div className="ld-winner-actions">
                     <button className="ld-btn-remove" onClick={removeWinner}>
                       Remove from wheel
@@ -253,9 +260,12 @@ export default function LuckyDraw() {
                 ) : (
                   <ol className="ld-winners-list">
                     {winners.map((name, i) => (
-                      <li key={`${name}-${i}`} className={`ld-winner-item ${i === 0 ? 'latest' : ''}`}>
+                      <li key={`${name.name}-${i}`} className={`ld-winner-item ${i === 0 ? 'latest' : ''}`}>
                         <span className="ld-winner-rank">{i + 1}</span>
-                        <span className="ld-winner-name">{name}</span>
+                        <span className="ld-winner-info">
+                          <span className="ld-winner-name">{name.name}</span>
+                          <span className="ld-winner-sub">{name.subCommittee}</span>
+                        </span>
                         {i === 0 && <span className="ld-new-badge">NEW</span>}
                       </li>
                     ))}
