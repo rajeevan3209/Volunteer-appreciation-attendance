@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import PptxGenJS from 'pptxgenjs';
 import './LuckyDrawBulk.css';
 
 const COLORS = [
@@ -12,32 +13,28 @@ function getCanvasSize() {
 
 export default function LuckyDrawBulk() {
   const [wheel, setWheel] = useState([]);
-  const [selected, setSelected] = useState([]);   // bulk-selected this session
+  // rounds: [{ roundNum, winners: [{id, name, subCommittee}] }]
+  const [rounds, setRounds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
   const [canvasSize, setCanvasSize] = useState(getCanvasSize());
   const [toast, setToast] = useState(null);
 
-  // Count modal state
   const [showCountModal, setShowCountModal] = useState(false);
   const [countInput, setCountInput] = useState('');
   const [countError, setCountError] = useState('');
 
-  // Flash overlay when each winner lands
-  const [flashWinner, setFlashWinner] = useState(null); // { name, subCommittee, rank }
-
-  // Bulk run state
-  const [bulkTotal, setBulkTotal] = useState(0);        // how many to pick
-  const [bulkPicked, setBulkPicked] = useState(0);      // how many picked so far
-  const [bulkDone, setBulkDone] = useState(false);
+  const [flashWinner, setFlashWinner] = useState(null);
+  const [bulkTotal, setBulkTotal] = useState(0);
+  const [bulkPicked, setBulkPicked] = useState(0);
+  const [currentRoundDone, setCurrentRoundDone] = useState(false);
 
   const canvasRef = useRef(null);
   const spinAngleRef = useRef(0);
   const animFrameRef = useRef(null);
   const wheelRef = useRef([]);
-  // Queued picks: resolved per-spin to avoid stale closures
-  const pendingCountRef = useRef(0);
   const pickedRef = useRef([]);
+  const roundNumRef = useRef(0);
 
   useEffect(() => {
     const onResize = () => setCanvasSize(getCanvasSize());
@@ -68,7 +65,7 @@ export default function LuckyDrawBulk() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // ── Drawing ───────────────────────────────────────────────────────────────
+  // ── Canvas drawing ────────────────────────────────────────────────────────
 
   const drawWheel = useCallback((angle, participants) => {
     const canvas = canvasRef.current;
@@ -140,7 +137,6 @@ export default function LuckyDrawBulk() {
       ctx.restore();
     });
 
-    // Pointer
     const pw = 14, ph = 30;
     ctx.beginPath();
     ctx.moveTo(cx - pw, ph / 2);
@@ -162,7 +158,7 @@ export default function LuckyDrawBulk() {
     drawWheel(spinAngleRef.current, wheel);
   }, [wheel, drawWheel, canvasSize]);
 
-  // ── Spin one slot and resolve with the winner entry ───────────────────────
+  // ── Single spin → resolves with winner ───────────────────────────────────
 
   const spinOnce = useCallback((currentWheel) => {
     return new Promise((resolve) => {
@@ -186,7 +182,7 @@ export default function LuckyDrawBulk() {
           const norm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
           const pointerOffset = ((3 * Math.PI / 2) - norm + 2 * Math.PI) % (2 * Math.PI);
           const idx = Math.floor(pointerOffset / arc) % currentWheel.length;
-          resolve({ winner: currentWheel[idx], idx });
+          resolve({ winner: currentWheel[idx] });
         }
       };
 
@@ -194,62 +190,63 @@ export default function LuckyDrawBulk() {
     });
   }, [drawWheel]);
 
-  // ── Accept winner via API ─────────────────────────────────────────────────
-
   const acceptViaAPI = async (entry) => {
     const res = await fetch(`/api/lucky-draw/${entry.id}/accept`, { method: 'PATCH' });
     if (!res.ok) throw new Error('API error');
   };
 
-  // ── Run bulk selection sequentially ──────────────────────────────────────
+  // ── Bulk run ──────────────────────────────────────────────────────────────
 
   const runBulk = useCallback(async (count) => {
     setSpinning(true);
+    setCurrentRoundDone(false);
     setBulkTotal(count);
     setBulkPicked(0);
-    setBulkDone(false);
-    pendingCountRef.current = count;
     pickedRef.current = [];
+
+    roundNumRef.current += 1;
+    const thisRound = roundNumRef.current;
+
+    // Initialise this round's entry in state immediately
+    setRounds(prev => [...prev, { roundNum: thisRound, winners: [] }]);
 
     let remaining = [...wheelRef.current];
 
     for (let i = 0; i < count; i++) {
       if (remaining.length === 0) break;
 
-      // Spin
       const { winner } = await spinOnce(remaining);
 
-      // Brief flash overlay (1.8s) so audience can see the winner
       const rank = pickedRef.current.length + 1;
       setFlashWinner({ name: winner.name, subCommittee: winner.subCommittee, rank });
 
-      // Accept in DB (non-blocking from UX perspective — fire and handle error separately)
-      try { await acceptViaAPI(winner); } catch { /* toast after loop */ }
+      try { await acceptViaAPI(winner); } catch { /* best effort */ }
 
-      // Update local state
       pickedRef.current = [...pickedRef.current, winner];
       remaining = remaining.filter(p => p.id !== winner.id);
 
-      // Update wheel state for re-draw
       wheelRef.current = remaining;
       setWheel([...remaining]);
-      setSelected([...pickedRef.current]);
       setBulkPicked(rank);
 
-      // Hold the flash overlay for 1.8s before spinning again
+      // Append winner to this round's list
+      setRounds(prev => prev.map(r =>
+        r.roundNum === thisRound
+          ? { ...r, winners: [...r.winners, winner] }
+          : r
+      ));
+
       await new Promise(r => setTimeout(r, 1800));
       setFlashWinner(null);
-
-      // Small gap before next spin
       if (i < count - 1) await new Promise(r => setTimeout(r, 400));
     }
 
-    setBulkDone(true);
+    setCurrentRoundDone(true);
     setSpinning(false);
-    showToast(`${pickedRef.current.length} winner(s) selected!`, 'success');
+    showToast(`Round ${thisRound}: ${pickedRef.current.length} winner(s) selected!`, 'success');
   }, [spinOnce]);
 
-  // ── Count modal handlers ──────────────────────────────────────────────────
+  // ── Count modal ───────────────────────────────────────────────────────────
 
   const openCountModal = () => {
     if (wheel.length < 1) return;
@@ -268,18 +265,108 @@ export default function LuckyDrawBulk() {
 
   const handleCountKeyDown = (e) => { if (e.key === 'Enter') confirmCount(); };
 
-  // ── Reset session (does NOT clear DB winners, just resets local view) ─────
-
-  const resetSession = async () => {
-    setBulkDone(false);
-    setBulkTotal(0);
-    setBulkPicked(0);
-    setSelected([]);
-    pickedRef.current = [];
+  // "New Round" — keep all rounds, just refresh the wheel and allow another spin
+  const startNewRound = async () => {
+    setCurrentRoundDone(false);
     await loadData();
   };
 
+  // ── PPT export ────────────────────────────────────────────────────────────
+
+  const downloadPPT = () => {
+    const prs = new PptxGenJS();
+    prs.layout = 'LAYOUT_WIDE'; // 13.33" x 7.5"
+
+    const BG = '#1b5e20';
+    const GOLD = '#ffd600';
+    const WHITE = '#ffffff';
+    const LIGHT = '#e8f5e9';
+
+    // Title slide
+    const title = prs.addSlide();
+    title.background = { color: BG };
+    title.addText('🏆 Lucky Draw Results', {
+      x: 0.5, y: 2.2, w: 12.33, h: 1.2,
+      fontSize: 40, bold: true, color: GOLD, align: 'center',
+    });
+    title.addText('Volunteer Appreciation Dinner\nPasir Ris West Community Centre', {
+      x: 0.5, y: 3.6, w: 12.33, h: 1.2,
+      fontSize: 20, color: WHITE, align: 'center',
+    });
+    title.addText(`Total rounds: ${rounds.length}  ·  Total winners: ${rounds.reduce((s, r) => s + r.winners.length, 0)}`, {
+      x: 0.5, y: 5.5, w: 12.33, h: 0.5,
+      fontSize: 14, color: LIGHT, align: 'center',
+    });
+
+    rounds.forEach((round) => {
+      // Round header slide
+      const hdr = prs.addSlide();
+      hdr.background = { color: BG };
+      hdr.addText(`Round ${round.roundNum}`, {
+        x: 0.5, y: 2.8, w: 12.33, h: 1.2,
+        fontSize: 52, bold: true, color: GOLD, align: 'center',
+      });
+      hdr.addText(`${round.winners.length} winner(s)`, {
+        x: 0.5, y: 4.2, w: 12.33, h: 0.7,
+        fontSize: 22, color: WHITE, align: 'center',
+      });
+
+      // Winners slide(s) — 6 per slide
+      const PER_SLIDE = 6;
+      for (let s = 0; s < round.winners.length; s += PER_SLIDE) {
+        const slice = round.winners.slice(s, s + PER_SLIDE);
+        const slide = prs.addSlide();
+        slide.background = { color: '#f1f8e9' };
+
+        slide.addText(`Round ${round.roundNum} — Winners`, {
+          x: 0.4, y: 0.25, w: 12.5, h: 0.6,
+          fontSize: 20, bold: true, color: BG,
+        });
+
+        const rowH = 0.9;
+        const startY = 1.05;
+        slice.forEach((w, i) => {
+          const rank = s + i + 1;
+          const y = startY + i * rowH;
+
+          // Rank badge
+          slide.addShape(prs.ShapeType.ellipse, {
+            x: 0.4, y: y, w: 0.65, h: 0.65,
+            fill: { color: rank === 1 ? 'ff8f00' : '2e7d32' },
+            line: { color: 'ffffff', width: 1 },
+          });
+          slide.addText(`${rank}`, {
+            x: 0.4, y: y + 0.08, w: 0.65, h: 0.5,
+            fontSize: 14, bold: true, color: WHITE, align: 'center',
+          });
+
+          // Name + sub-committee
+          slide.addText(w.name, {
+            x: 1.2, y: y, w: 9.5, h: 0.42,
+            fontSize: 17, bold: true, color: BG,
+          });
+          slide.addText(w.subCommittee, {
+            x: 1.2, y: y + 0.44, w: 9.5, h: 0.32,
+            fontSize: 11, color: '#388e3c',
+          });
+
+          // Separator line
+          if (i < slice.length - 1) {
+            slide.addShape(prs.ShapeType.line, {
+              x: 1.2, y: y + rowH - 0.04, w: 11.5, h: 0,
+              line: { color: 'c8e6c9', width: 0.5 },
+            });
+          }
+        });
+      }
+    });
+
+    prs.writeFile({ fileName: 'lucky-draw-results.pptx' });
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
+
+  const totalWinners = rounds.reduce((s, r) => s + r.winners.length, 0);
 
   return (
     <div className="ldb-app">
@@ -293,14 +380,14 @@ export default function LuckyDrawBulk() {
       <main className="ldb-main">
         {loading ? (
           <div className="ldb-state">⏳ Loading lucky draw…</div>
-        ) : wheel.length === 0 && selected.length === 0 ? (
+        ) : wheel.length === 0 && rounds.length === 0 ? (
           <div className="ldb-state">
             <p>No participants in the lucky draw yet.</p>
             <p className="ldb-state-sub">Participants are added when they mark attendance.</p>
           </div>
         ) : (
           <>
-            {/* Count input modal */}
+            {/* Count modal */}
             {showCountModal && (
               <div className="ldb-overlay">
                 <div className="ldb-modal">
@@ -377,38 +464,62 @@ export default function LuckyDrawBulk() {
                   </button>
                 </div>
 
-                {bulkDone && (
+                {currentRoundDone && !spinning && (
                   <div className="ldb-done-msg">
-                    🎉 Done! {selected.length} winner(s) selected.
-                    <button className="ldb-btn-reset" onClick={resetSession}>
-                      New Round
-                    </button>
+                    🎉 Round {roundNumRef.current} complete!
+                    {wheel.length > 0 && (
+                      <button className="ldb-btn-reset" onClick={startNewRound}>
+                        New Round
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
 
-              {/* Selected winners column */}
+              {/* Results panel */}
               <div className="ldb-winners-col">
                 <div className="ldb-winners-header">
-                  <h2>🏆 Selected ({selected.length})</h2>
+                  <h2>🏆 Results ({totalWinners})</h2>
+                  {totalWinners > 0 && (
+                    <button className="ldb-btn-ppt" onClick={downloadPPT} title="Download as PowerPoint">
+                      ⬇ PPT
+                    </button>
+                  )}
                 </div>
-                {selected.length === 0 ? (
+
+                {rounds.length === 0 ? (
                   <div className="ldb-winners-empty">
                     Click SPIN and enter how many winners to pick.
                   </div>
                 ) : (
-                  <ol className="ldb-winners-list">
-                    {selected.map((w, i) => (
-                      <li key={w.id} className={`ldb-winner-item ${i === selected.length - 1 ? 'latest' : ''}`}>
-                        <span className="ldb-winner-rank">{i + 1}</span>
-                        <span className="ldb-winner-info">
-                          <span className="ldb-winner-name">{w.name}</span>
-                          <span className="ldb-winner-sub">{w.subCommittee}</span>
-                        </span>
-                        {i === selected.length - 1 && <span className="ldb-new-badge">NEW</span>}
-                      </li>
+                  <div className="ldb-rounds-container">
+                    {rounds.map((round) => (
+                      <div key={round.roundNum} className="ldb-round-block">
+                        <div className="ldb-round-label">
+                          Round {round.roundNum}
+                          <span className="ldb-round-count">{round.winners.length} winners</span>
+                        </div>
+                        <ol className="ldb-winners-list">
+                          {round.winners.map((w, i) => (
+                            <li
+                              key={w.id}
+                              className={`ldb-winner-item ${
+                                round.roundNum === roundNumRef.current &&
+                                i === round.winners.length - 1 &&
+                                spinning ? 'latest' : ''
+                              }`}
+                            >
+                              <span className="ldb-winner-rank">{i + 1}</span>
+                              <span className="ldb-winner-info">
+                                <span className="ldb-winner-name">{w.name}</span>
+                                <span className="ldb-winner-sub">{w.subCommittee}</span>
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
                     ))}
-                  </ol>
+                  </div>
                 )}
               </div>
             </div>
