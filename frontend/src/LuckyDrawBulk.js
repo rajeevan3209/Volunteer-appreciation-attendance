@@ -23,6 +23,7 @@ export default function LuckyDrawBulk() {
   const [showCountModal, setShowCountModal] = useState(false);
   const [countInput, setCountInput] = useState('');
   const [countError, setCountError] = useState('');
+  const [pptWarnCount, setPptWarnCount] = useState(null); // pending count awaiting PPT warning confirmation
 
   const [flashWinner, setFlashWinner] = useState(null);
   const [bulkTotal, setBulkTotal] = useState(0);
@@ -259,11 +260,27 @@ export default function LuckyDrawBulk() {
     const n = parseInt(countInput, 10);
     if (!n || n < 1) { setCountError('Please enter a number ≥ 1.'); return; }
     if (n > wheel.length) { setCountError(`Only ${wheel.length} participant(s) available.`); return; }
+    if (n > 10) {
+      // Show PPT formatting warning before proceeding
+      setPptWarnCount(n);
+      return;
+    }
     setShowCountModal(false);
     runBulk(n);
   };
 
   const handleCountKeyDown = (e) => { if (e.key === 'Enter') confirmCount(); };
+
+  const confirmPptWarn = () => {
+    const n = pptWarnCount;
+    setPptWarnCount(null);
+    setShowCountModal(false);
+    runBulk(n);
+  };
+
+  const dismissPptWarn = () => {
+    setPptWarnCount(null);
+  };
 
   // "New Round" — keep all rounds, just refresh the wheel and allow another spin
   const startNewRound = async () => {
@@ -391,24 +408,44 @@ export default function LuckyDrawBulk() {
             {showCountModal && (
               <div className="ldb-overlay">
                 <div className="ldb-modal">
-                  <h2>How many winners?</h2>
-                  <p className="ldb-modal-sub">{wheel.length} participants available</p>
-                  <input
-                    className="ldb-count-input"
-                    type="number"
-                    min="1"
-                    max={wheel.length}
-                    value={countInput}
-                    onChange={e => { setCountInput(e.target.value); setCountError(''); }}
-                    onKeyDown={handleCountKeyDown}
-                    autoFocus
-                    placeholder={`1 – ${wheel.length}`}
-                  />
-                  {countError && <p className="ldb-count-error">{countError}</p>}
-                  <div className="ldb-modal-actions">
-                    <button className="ldb-btn-cancel" onClick={() => setShowCountModal(false)}>Cancel</button>
-                    <button className="ldb-btn-start" onClick={confirmCount}>Start Spin</button>
-                  </div>
+                  {pptWarnCount ? (
+                    <>
+                      <div className="ldb-ppt-warn-icon">⚠️</div>
+                      <h2 className="ldb-warn-title">PPT Formatting Notice</h2>
+                      <p className="ldb-warn-body">
+                        You selected <strong>{pptWarnCount} winners</strong>. The PowerPoint export
+                        will still include all winners, but slides with more than 10 entries
+                        may not be formatted as neatly.
+                      </p>
+                      <p className="ldb-warn-body ldb-warn-sub">
+                        Do you want to go ahead?
+                      </p>
+                      <div className="ldb-modal-actions">
+                        <button className="ldb-btn-cancel" onClick={dismissPptWarn}>Go Back</button>
+                        <button className="ldb-btn-start" onClick={confirmPptWarn}>Yes, Proceed</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h2>How many winners?</h2>
+                      <p className="ldb-modal-sub">{wheel.length} participants available</p>
+                      <input
+                        className="ldb-count-input"
+                        type="number"
+                        min="1"
+                        value={countInput}
+                        onChange={e => { setCountInput(e.target.value); setCountError(''); }}
+                        onKeyDown={handleCountKeyDown}
+                        autoFocus
+                        placeholder={`1 – ${wheel.length}`}
+                      />
+                      {countError && <p className="ldb-count-error">{countError}</p>}
+                      <div className="ldb-modal-actions">
+                        <button className="ldb-btn-cancel" onClick={() => setShowCountModal(false)}>Cancel</button>
+                        <button className="ldb-btn-start" onClick={confirmCount}>Start Spin</button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}

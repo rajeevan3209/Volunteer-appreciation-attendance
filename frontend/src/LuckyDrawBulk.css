@@ -369,6 +369,32 @@
   margin-top: 6px;
   font-weight: 500;
 }
+
+/* PPT warning step inside the modal */
+.ldb-ppt-warn-icon {
+  font-size: 2.4rem;
+  margin-bottom: 8px;
+}
+.ldb-warn-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #e65100;
+  margin-bottom: 12px;
+}
+.ldb-warn-body {
+  font-size: 0.875rem;
+  color: #4e342e;
+  line-height: 1.55;
+  margin-bottom: 6px;
+}
+.ldb-warn-body strong {
+  color: #1b5e20;
+  font-weight: 700;
+}
+.ldb-warn-sub {
+  color: #795548;
+  margin-bottom: 0;
+}
 .ldb-modal-actions {
   display: flex;
   gap: 10px;
