@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="005-create-bulk-draw" author="app">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="bulk_draw_selection"/></not>
+        </preConditions>
+        <createTable tableName="bulk_draw_selection">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="round_num" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rank_in_round" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participant_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sub_committee" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="selected_at" type="TIMESTAMP" defaultValueComputed="NOW()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

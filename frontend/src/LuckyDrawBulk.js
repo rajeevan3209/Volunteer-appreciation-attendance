@@ -50,15 +50,42 @@ export default function LuckyDrawBulk() {
 
   const loadData = useCallback(async () => {
     try {
-      const res = await fetch('/api/lucky-draw');
-      const all = await res.json();
+      const [ldRes, bulkRes] = await Promise.all([
+        fetch('/api/lucky-draw'),
+        fetch('/api/bulk-draw'),
+      ]);
+      const all = await ldRes.json();
+      const bulkAll = await bulkRes.json();
+
+      // Wheel: PENDING entries only
       const pending = all
         .filter(e => e.status === 'PENDING')
         .map(e => ({ id: e.id, name: e.participantName, subCommittee: e.subCommittee }));
       setWheel(pending);
       wheelRef.current = pending;
+
+      // Rebuild rounds from persisted bulk draw history
+      const roundMap = new Map();
+      bulkAll.forEach(row => {
+        if (!roundMap.has(row.roundNum)) roundMap.set(row.roundNum, []);
+        roundMap.get(row.roundNum).push({
+          id: row.id,
+          name: row.participantName,
+          subCommittee: row.subCommittee,
+        });
+      });
+      const loadedRounds = Array.from(roundMap.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([roundNum, winners]) => ({ roundNum, winners }));
+      setRounds(loadedRounds);
+
+      // Seed round counter so new rounds continue from the last saved round
+      const maxRound = loadedRounds.length > 0
+        ? loadedRounds[loadedRounds.length - 1].roundNum
+        : 0;
+      roundNumRef.current = maxRound;
     } catch {
-      showToast('Failed to load lucky draw data.');
+      showToast('Failed to load data.');
     } finally {
       setLoading(false);
     }
@@ -196,6 +223,19 @@ export default function LuckyDrawBulk() {
     if (!res.ok) throw new Error('API error');
   };
 
+  const saveBulkSelection = async (roundNum, rankInRound, winner) => {
+    await fetch('/api/bulk-draw', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        roundNum,
+        rankInRound,
+        participantName: winner.name,
+        subCommittee: winner.subCommittee,
+      }),
+    });
+  };
+
   // ── Bulk run ──────────────────────────────────────────────────────────────
 
   const runBulk = useCallback(async (count) => {
@@ -208,7 +248,6 @@ export default function LuckyDrawBulk() {
     roundNumRef.current += 1;
     const thisRound = roundNumRef.current;
 
-    // Initialise this round's entry in state immediately
     setRounds(prev => [...prev, { roundNum: thisRound, winners: [] }]);
 
     let remaining = [...wheelRef.current];
@@ -221,7 +260,13 @@ export default function LuckyDrawBulk() {
       const rank = pickedRef.current.length + 1;
       setFlashWinner({ name: winner.name, subCommittee: winner.subCommittee, rank });
 
-      try { await acceptViaAPI(winner); } catch { /* best effort */ }
+      // Persist to lucky_draw and bulk_draw_selection tables
+      try {
+        await Promise.all([
+          acceptViaAPI(winner),
+          saveBulkSelection(thisRound, rank, winner),
+        ]);
+      } catch { /* best effort — UI continues regardless */ }
 
       pickedRef.current = [...pickedRef.current, winner];
       remaining = remaining.filter(p => p.id !== winner.id);
@@ -230,7 +275,6 @@ export default function LuckyDrawBulk() {
       setWheel([...remaining]);
       setBulkPicked(rank);
 
-      // Append winner to this round's list
       setRounds(prev => prev.map(r =>
         r.roundNum === thisRound
           ? { ...r, winners: [...r.winners, winner] }
