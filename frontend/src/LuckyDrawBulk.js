@@ -330,10 +330,10 @@ export default function LuckyDrawBulk() {
           const y = startY + i * rowH;
 
           // Rank badge
-          slide.addShape(prs.ShapeType.ellipse, {
+          slide.addShape('ellipse', {
             x: 0.4, y: y, w: 0.65, h: 0.65,
             fill: { color: rank === 1 ? 'ff8f00' : '2e7d32' },
-            line: { color: 'ffffff', width: 1 },
+            line: { color: 'ffffff', pt: 1 },
           });
           slide.addText(`${rank}`, {
             x: 0.4, y: y + 0.08, w: 0.65, h: 0.5,
@@ -347,14 +347,14 @@ export default function LuckyDrawBulk() {
           });
           slide.addText(w.subCommittee, {
             x: 1.2, y: y + 0.44, w: 9.5, h: 0.32,
-            fontSize: 11, color: '#388e3c',
+            fontSize: 11, color: '388e3c',
           });
 
           // Separator line
           if (i < slice.length - 1) {
-            slide.addShape(prs.ShapeType.line, {
+            slide.addShape('line', {
               x: 1.2, y: y + rowH - 0.04, w: 11.5, h: 0,
-              line: { color: 'c8e6c9', width: 0.5 },
+              line: { color: 'c8e6c9', pt: 0.5 },
             });
           }
         });
