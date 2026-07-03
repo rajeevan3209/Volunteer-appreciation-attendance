@@ -328,49 +328,83 @@ export default function LuckyDrawBulk() {
         fontSize: 22, color: WHITE, align: 'center',
       });
 
-      // Winners slide(s) — 6 per slide
-      const PER_SLIDE = 6;
+      // Winners slides — 10 per slide, displayed as 2 columns of 5
+      // Layout: slide is 13.33" × 7.5"
+      //   Left column:  x=0.35,  column width=5.9"
+      //   Right column: x=6.75,  column width=5.9"
+      //   5 rows per column, rowH=1.1", startY=1.0"
+      const PER_SLIDE = 10;
+      const ROWS = 5;
+      const COL_X = [0.35, 6.75];
+      const COL_W = 5.9;
+      const BADGE_W = 0.6;
+      const rowH = 1.08;
+      const startY = 1.05;
+
       for (let s = 0; s < round.winners.length; s += PER_SLIDE) {
         const slice = round.winners.slice(s, s + PER_SLIDE);
         const slide = prs.addSlide();
-        slide.background = { color: '#f1f8e9' };
+        slide.background = { color: 'f1f8e9' };
 
+        // Header bar
+        slide.addShape('rect', {
+          x: 0, y: 0, w: 13.33, h: 0.72,
+          fill: { color: '1b5e20' }, line: { color: '1b5e20', pt: 0 },
+        });
         slide.addText(`Round ${round.roundNum} — Winners`, {
-          x: 0.4, y: 0.25, w: 12.5, h: 0.6,
-          fontSize: 20, bold: true, color: BG,
+          x: 0.4, y: 0.1, w: 8, h: 0.52,
+          fontSize: 18, bold: true, color: WHITE,
+        });
+        const pageLabel = round.winners.length > PER_SLIDE
+          ? `(${s + 1}–${Math.min(s + PER_SLIDE, round.winners.length)} of ${round.winners.length})`
+          : `${round.winners.length} winner(s)`;
+        slide.addText(pageLabel, {
+          x: 8.5, y: 0.1, w: 4.43, h: 0.52,
+          fontSize: 13, color: 'a5d6a7', align: 'right',
         });
 
-        const rowH = 0.9;
-        const startY = 1.05;
+        // Divider between columns
+        slide.addShape('line', {
+          x: 6.665, y: 0.85, w: 0, h: 6.4,
+          line: { color: 'c8e6c9', pt: 1 },
+        });
+
         slice.forEach((w, i) => {
+          const col = i < ROWS ? 0 : 1;        // left col: 0–4, right col: 5–9
+          const row = i < ROWS ? i : i - ROWS;
+          const cx = COL_X[col];
+          const y = startY + row * rowH;
           const rank = s + i + 1;
-          const y = startY + i * rowH;
 
           // Rank badge
           slide.addShape('ellipse', {
-            x: 0.4, y: y, w: 0.65, h: 0.65,
+            x: cx, y: y + 0.06, w: BADGE_W, h: BADGE_W,
             fill: { color: rank === 1 ? 'ff8f00' : '2e7d32' },
             line: { color: 'ffffff', pt: 1 },
           });
           slide.addText(`${rank}`, {
-            x: 0.4, y: y + 0.08, w: 0.65, h: 0.5,
-            fontSize: 14, bold: true, color: WHITE, align: 'center',
+            x: cx, y: y + 0.12, w: BADGE_W, h: BADGE_W - 0.1,
+            fontSize: 13, bold: true, color: WHITE, align: 'center',
           });
 
-          // Name + sub-committee
+          // Name
           slide.addText(w.name, {
-            x: 1.2, y: y, w: 9.5, h: 0.42,
-            fontSize: 17, bold: true, color: BG,
+            x: cx + BADGE_W + 0.1, y: y + 0.04, w: COL_W - BADGE_W - 0.15, h: 0.42,
+            fontSize: 14, bold: true, color: '1b5e20',
           });
+          // Sub-committee
           slide.addText(w.subCommittee, {
-            x: 1.2, y: y + 0.44, w: 9.5, h: 0.32,
-            fontSize: 11, color: '388e3c',
+            x: cx + BADGE_W + 0.1, y: y + 0.46, w: COL_W - BADGE_W - 0.15, h: 0.32,
+            fontSize: 10, color: '388e3c',
           });
 
-          // Separator line
-          if (i < slice.length - 1) {
+          // Separator line (within each column, between rows)
+          const isLastInCol = (col === 0 && row === Math.min(ROWS, slice.length) - 1)
+                           || (col === 1 && i === slice.length - 1);
+          if (!isLastInCol) {
             slide.addShape('line', {
-              x: 1.2, y: y + rowH - 0.04, w: 11.5, h: 0,
+              x: cx + BADGE_W + 0.1, y: y + rowH - 0.05,
+              w: COL_W - BADGE_W - 0.15, h: 0,
               line: { color: 'c8e6c9', pt: 0.5 },
             });
           }
