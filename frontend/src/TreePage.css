@@ -77,18 +77,22 @@
   pointer-events: none;
 }
 
-/* Name labels */
+/* Name labels — sized for up to 350 names.
+   clamp(7px, 0.75vw, 9px): 7 px on small screens, ~9 px at 780 px wide,
+   capped at 9 px so names stay dense and the tree image shows through. */
 .tree-name {
   position: absolute;
-  font-size: clamp(0.6rem, 1.2vw, 0.8rem);
+  font-size: clamp(7px, 0.75vw, 9px);
   font-weight: 700;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
   will-change: transform, opacity;
   animation: settleIntoTree 2s ease-out forwards;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.1px;
   transform-origin: center center;
+  line-height: 1;
 }
 
 @keyframes settleIntoTree {

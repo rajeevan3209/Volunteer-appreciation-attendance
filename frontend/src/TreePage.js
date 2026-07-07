@@ -4,16 +4,17 @@ import './TreePage.css';
 const API = '';
 const POLL_INTERVAL = 5000;
 
+// High-contrast colours that stand out on the dark-green tree canopy.
+// Each gets a strong dark shadow in the JSX so it's legible on any leaf colour.
 const NAME_COLORS = [
-  '#e53935', // red
-  '#c62828', // dark red
-  '#ff1744', // bright red
-  '#fdd835', // yellow
-  '#f9a825', // dark yellow
-  '#ffee58', // light yellow
-  '#800000', // maroon
-  '#b71c1c', // maroon-red
-  '#8b0000', // dark maroon
+  '#FFFFFF',   // white   — brightest, most readable
+  '#FFE500',   // gold    — warm, pops on green
+  '#FF8C00',   // orange  — warm contrast
+  '#40E0D0',   // teal    — cool contrast on green
+  '#FF6EB4',   // pink    — vivid on green
+  '#ADFF2F',   // lime    — yellow-green, still visible on dark green
+  '#87CEEB',   // sky blue — soft, readable
+  '#FFA07A',   // salmon  — warm pastel
 ];
 
 // Multi-zone canopy map — each zone is an ellipse tracing the real leaf/branch area.
@@ -53,18 +54,19 @@ function randomInCanopy() {
   return { x: 0.50, y: 0.31 };
 }
 
-// Avoid overlapping by checking placed positions
-function findPosition(placed, attempts = 120) {
+// Avoid overlapping — thresholds tuned for 350 names at ~8px font in a 780px container.
+// dx=0.085 ≈ 66px wide slot, dy=0.020 ≈ 10px tall slot (just above font height).
+function findPosition(placed, attempts = 300) {
   for (let i = 0; i < attempts; i++) {
     const pos = randomInCanopy();
     const tooClose = placed.some(p => {
       const dx = Math.abs(p.x - pos.x);
       const dy = Math.abs(p.y - pos.y);
-      return dx < 0.10 && dy < 0.045;
+      return dx < 0.085 && dy < 0.020;
     });
     if (!tooClose) return pos;
   }
-  return randomInCanopy(); // fallback if crowded
+  return randomInCanopy(); // fallback when very crowded
 }
 
 export default function TreePage() {
@@ -136,7 +138,15 @@ export default function TreePage() {
                   top: `${n.y * 100}%`,
                   animationDelay: `${n.delay}ms`,
                   color: n.color,
-                  textShadow: `0 0 8px rgba(255,255,255,0.9), 0 0 2px rgba(255,255,255,0.6)`,
+                  // Dark outline on all 4 sides so the name reads on any leaf colour
+                  textShadow: `
+                    0 0 3px #000,
+                    0 0 6px rgba(0,0,0,0.85),
+                    1px 1px 0 #000,
+                    -1px -1px 0 #000,
+                    1px -1px 0 #000,
+                    -1px  1px 0 #000
+                  `.trim(),
                 }}
               >
                 {n.name}
