@@ -7,7 +7,9 @@ const COLORS = [
 ];
 
 function getCanvasSize() {
-  return Math.min(480, window.innerWidth - 40);
+  // Fill available viewport — subtract header (~80px) and some padding
+  const available = Math.min(window.innerHeight - 120, window.innerWidth - 340);
+  return Math.max(320, available);
 }
 
 export default function LuckyDraw() {
@@ -219,8 +221,8 @@ export default function LuckyDraw() {
       {toast && <div className={`ld-toast ld-toast-${toast.type}`}>{toast.message}</div>}
 
       <header className="ld-header">
-        <h1>Welcome to Volunteer Appreciation Dinner</h1>
-        <p>Pasir Ris West Community Centre · Lucky Draw</p>
+        <h1>Welcome to Pasir Ris Elias CC Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
+        <p>Lucky Draw</p>
       </header>
 
       <main className="ld-main">

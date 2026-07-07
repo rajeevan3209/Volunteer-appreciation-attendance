@@ -138,8 +138,8 @@ export default function TreePage() {
   return (
     <div className="tree-app">
       <header className="tree-header">
-        <h1>Welcome to Volunteer Appreciation Dinner</h1>
-        <p>Pasir Ris West Community Centre · Our Volunteers</p>
+        <h1>Welcome to Pasir Ris Elias CC Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
+        <p>Our Volunteers</p>
         <span className="tree-count">{names.length} volunteer{names.length !== 1 ? 's' : ''} on the tree</span>
       </header>
 

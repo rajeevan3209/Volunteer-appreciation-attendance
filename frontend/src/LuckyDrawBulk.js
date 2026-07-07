@@ -350,7 +350,7 @@ export default function LuckyDrawBulk() {
       x: 0.5, y: 2.2, w: 12.33, h: 1.2,
       fontSize: 40, bold: true, color: GOLD, align: 'center',
     });
-    title.addText('Volunteer Appreciation Dinner\nPasir Ris West Community Centre', {
+    title.addText('Pasir Ris Elias CC Volunteer Appreciation & Appointment Ceremony 2026', {
       x: 0.5, y: 3.6, w: 12.33, h: 1.2,
       fontSize: 20, color: WHITE, align: 'center',
     });
@@ -468,8 +468,8 @@ export default function LuckyDrawBulk() {
       {toast && <div className={`ldb-toast ldb-toast-${toast.type}`}>{toast.message}</div>}
 
       <header className="ldb-header">
-        <h1>Welcome to Volunteer Appreciation Dinner</h1>
-        <p>Pasir Ris West Community Centre · Bulk Lucky Draw</p>
+        <h1>Welcome to Pasir Ris Elias CC Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
+        <p>Bulk Lucky Draw</p>
       </header>
 
       <main className="ldb-main">
