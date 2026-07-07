@@ -17,27 +17,35 @@ const NAME_COLORS = [
   '#FFA07A',   // salmon  — warm pastel
 ];
 
-// Multi-zone canopy map — each zone is an ellipse tracing the real leaf/branch area.
+// Multi-zone canopy map — ellipses tracing the real leaf/branch area.
 // Values are fractions of the tree-inner container (width / height).
-// Analysed against tree.png: circular badge, canopy from ~y=5% to y=54%,
-// trunk at x=45–55% y=56–74%, roots below y=73%.
+//
+// Calibration rules applied from screenshot review:
+//  • Long names (~120px wide at 9px bold) need their centre ≥ 8% inside the
+//    canopy edge so the text doesn't spill into the sky (at 780px container).
+//  • Top crown raised to cy=0.20 so names land on crown leaves, not the
+//    sunburst / circular text ring (which ends at ~y=13%).
+//  • All left zones pulled right, all right zones pulled left vs. previous.
+//  • New lower-centre zone fills the previously empty gap above the trunk.
 const ZONES = [
-  // top crown dome
-  { cx: 0.50, cy: 0.14, rx: 0.16, ry: 0.09 },
-  // upper-left canopy
-  { cx: 0.36, cy: 0.24, rx: 0.17, ry: 0.12 },
-  // upper-right canopy
-  { cx: 0.64, cy: 0.24, rx: 0.17, ry: 0.12 },
-  // centre canopy bulk
-  { cx: 0.50, cy: 0.31, rx: 0.15, ry: 0.13 },
-  // mid-left canopy
-  { cx: 0.34, cy: 0.36, rx: 0.14, ry: 0.12 },
-  // mid-right canopy
-  { cx: 0.66, cy: 0.36, rx: 0.14, ry: 0.12 },
-  // lower-left branch spread
-  { cx: 0.26, cy: 0.45, rx: 0.10, ry: 0.07 },
-  // lower-right branch spread
-  { cx: 0.74, cy: 0.45, rx: 0.10, ry: 0.07 },
+  // top crown — raised above sunburst; narrow so names stay on leaves
+  { cx: 0.50, cy: 0.20, rx: 0.12, ry: 0.07 },
+  // upper-left  (leftmost centre 0.33 → safe at 780 px)
+  { cx: 0.42, cy: 0.26, rx: 0.09, ry: 0.09 },
+  // upper-right (rightmost centre 0.67)
+  { cx: 0.58, cy: 0.26, rx: 0.09, ry: 0.09 },
+  // centre bulk — widest safe zone through the dense middle canopy
+  { cx: 0.50, cy: 0.32, rx: 0.16, ry: 0.12 },
+  // mid-left  (leftmost 0.31)
+  { cx: 0.41, cy: 0.39, rx: 0.10, ry: 0.10 },
+  // mid-right (rightmost 0.69)
+  { cx: 0.59, cy: 0.39, rx: 0.10, ry: 0.10 },
+  // lower-left branch (leftmost 0.33)
+  { cx: 0.41, cy: 0.46, rx: 0.08, ry: 0.07 },
+  // lower-centre — NEW: fills the empty area above the trunk
+  { cx: 0.50, cy: 0.48, rx: 0.14, ry: 0.07 },
+  // lower-right branch (rightmost 0.67)
+  { cx: 0.59, cy: 0.46, rx: 0.08, ry: 0.07 },
 ];
 
 function randomInCanopy() {
