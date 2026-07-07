@@ -16,25 +16,41 @@ const NAME_COLORS = [
   '#8b0000', // dark maroon
 ];
 
-// Canopy zone as an ellipse — tweak if tree image changes
-// Values are fractions of the container width/height
-const CANOPY = {
-  cx: 0.50,  // horizontal center
-  cy: 0.38,  // vertical center
-  rx: 0.40,  // horizontal radius
-  ry: 0.34,  // vertical radius
-};
+// Multi-zone canopy map — each zone is an ellipse tracing the real leaf/branch area.
+// Values are fractions of the tree-inner container (width / height).
+// Analysed against tree.png: circular badge, canopy from ~y=5% to y=54%,
+// trunk at x=45–55% y=56–74%, roots below y=73%.
+const ZONES = [
+  // top crown dome
+  { cx: 0.50, cy: 0.14, rx: 0.16, ry: 0.09 },
+  // upper-left canopy
+  { cx: 0.36, cy: 0.24, rx: 0.17, ry: 0.12 },
+  // upper-right canopy
+  { cx: 0.64, cy: 0.24, rx: 0.17, ry: 0.12 },
+  // centre canopy bulk
+  { cx: 0.50, cy: 0.31, rx: 0.15, ry: 0.13 },
+  // mid-left canopy
+  { cx: 0.34, cy: 0.36, rx: 0.14, ry: 0.12 },
+  // mid-right canopy
+  { cx: 0.66, cy: 0.36, rx: 0.14, ry: 0.12 },
+  // lower-left branch spread
+  { cx: 0.26, cy: 0.45, rx: 0.10, ry: 0.07 },
+  // lower-right branch spread
+  { cx: 0.74, cy: 0.45, rx: 0.10, ry: 0.07 },
+];
 
 function randomInCanopy() {
-  // Pick a random point inside the ellipse using rejection sampling
-  for (let i = 0; i < 200; i++) {
-    const x = CANOPY.cx + (Math.random() * 2 - 1) * CANOPY.rx;
-    const y = CANOPY.cy + (Math.random() * 2 - 1) * CANOPY.ry;
-    const dx = (x - CANOPY.cx) / CANOPY.rx;
-    const dy = (y - CANOPY.cy) / CANOPY.ry;
+  // Pick a zone at random, then rejection-sample within its ellipse
+  for (let attempt = 0; attempt < 300; attempt++) {
+    const zone = ZONES[Math.floor(Math.random() * ZONES.length)];
+    const x = zone.cx + (Math.random() * 2 - 1) * zone.rx;
+    const y = zone.cy + (Math.random() * 2 - 1) * zone.ry;
+    const dx = (x - zone.cx) / zone.rx;
+    const dy = (y - zone.cy) / zone.ry;
     if (dx * dx + dy * dy <= 1) return { x, y };
   }
-  return { x: CANOPY.cx, y: CANOPY.cy };
+  // Fallback to centre canopy
+  return { x: 0.50, y: 0.31 };
 }
 
 // Avoid overlapping by checking placed positions
