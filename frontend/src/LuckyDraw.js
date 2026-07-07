@@ -222,7 +222,7 @@ export default function LuckyDraw() {
 
       <header className="ld-header">
         <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
-        <p>Pasir Ris Elias CC · Lucky Draw</p>
+        <p>Pasir Ris Elias Community Club · Lucky Draw</p>
       </header>
 
       <main className="ld-main">

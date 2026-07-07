@@ -470,7 +470,7 @@ export default function LuckyDrawBulk() {
 
       <header className="ldb-header">
         <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
-        <p>Pasir Ris Elias CC · Bulk Lucky Draw</p>
+        <p>Pasir Ris Elias Community Club · Bulk Lucky Draw</p>
       </header>
 
       <main className="ldb-main">
