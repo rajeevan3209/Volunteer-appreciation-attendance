@@ -13,6 +13,7 @@ export default function Attendees() {
   const [pinError, setPinError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [reloadingLuckyDraw, setReloadingLuckyDraw] = useState(false);
 
   const ADMIN_PIN = '1986';
 
@@ -161,7 +162,7 @@ export default function Attendees() {
               onClick={() => handleOpenDialog({
                 icon: '🗑️',
                 title: 'Clear All Attendance',
-                message: `This will permanently delete all ${attendance.length} attendance records. Participants will be able to re-submit their attendance. This cannot be undone.`,
+                message: `This will permanently delete all ${attendance.length} attendance records and reset the lucky draw. Participants will be able to re-submit their attendance. This cannot be undone.`,
                 endpoint: '/api/admin/attendance',
               })}
               disabled={attendance.length === 0}
@@ -173,11 +174,18 @@ export default function Attendees() {
               onClick={() => handleOpenDialog({
                 icon: '⚠️',
                 title: 'Clear All Data',
-                message: 'This will delete ALL attendance records AND all lucky draw winners. Everything resets. This cannot be undone.',
+                message: 'This will delete ALL attendance records, lucky draw data, and bulk draw results. Everything resets. This cannot be undone.',
                 endpoint: '/api/admin/all',
               })}
             >
               ⚠️ Reset Everything
+            </button>
+            <button
+              className="att-admin-btn reload"
+              onClick={handleReloadLuckyDraw}
+              disabled={attendance.length === 0 || reloadingLuckyDraw}
+            >
+              {reloadingLuckyDraw ? '⏳ Reloading…' : '🔄 Reload Lucky Draw'}
             </button>
           </div>
         </div>
