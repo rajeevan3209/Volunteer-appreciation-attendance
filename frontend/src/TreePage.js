@@ -34,25 +34,27 @@ const NAME_COLORS = [
 //    to reach the branch-leaf areas the user circled green (empty).
 //  • Centre bulk and mid zones shifted down ~6% to match where leaves
 //    actually are in the image.
+// v4 — expanded left boundary + raised top crown + right mirror kept symmetric
 const ZONES = [
-  // top of crown — just below the sunburst ring (y=27–35%)
-  { cx: 0.50, cy: 0.29, rx: 0.12, ry: 0.04 },
-  // upper-left leaf mass
-  { cx: 0.41, cy: 0.33, rx: 0.10, ry: 0.08 },
-  // upper-right leaf mass
-  { cx: 0.59, cy: 0.33, rx: 0.10, ry: 0.08 },
-  // centre canopy bulk (densest green area)
+  // top crown — raised from cy=0.29 to cy=0.26 and taller (ry 0.04→0.06)
+  // so the very top of the leaf mass fills with names
+  { cx: 0.50, cy: 0.26, rx: 0.13, ry: 0.06 },
+  // upper-left — shifted left (cx 0.41→0.37) and wider (rx 0.10→0.13)
+  { cx: 0.37, cy: 0.33, rx: 0.13, ry: 0.08 },
+  // upper-right — mirror
+  { cx: 0.63, cy: 0.33, rx: 0.13, ry: 0.08 },
+  // centre bulk — unchanged, already good
   { cx: 0.50, cy: 0.39, rx: 0.17, ry: 0.10 },
-  // mid-left
-  { cx: 0.39, cy: 0.44, rx: 0.11, ry: 0.09 },
-  // mid-right
-  { cx: 0.61, cy: 0.44, rx: 0.11, ry: 0.09 },
-  // lower-left branch leaves (green-circled empty area in screenshot)
-  { cx: 0.29, cy: 0.51, rx: 0.09, ry: 0.07 },
-  // lower-centre above trunk
+  // mid-left — shifted left (cx 0.39→0.35) and wider (rx 0.11→0.13)
+  { cx: 0.35, cy: 0.44, rx: 0.13, ry: 0.09 },
+  // mid-right — mirror
+  { cx: 0.65, cy: 0.44, rx: 0.13, ry: 0.09 },
+  // lower-left branch — shifted left (cx 0.29→0.25, rx 0.09→0.10)
+  { cx: 0.25, cy: 0.51, rx: 0.10, ry: 0.07 },
+  // lower-centre — unchanged
   { cx: 0.50, cy: 0.51, rx: 0.13, ry: 0.06 },
-  // lower-right branch leaves (green-circled empty area in screenshot)
-  { cx: 0.71, cy: 0.51, rx: 0.09, ry: 0.07 },
+  // lower-right branch — mirror
+  { cx: 0.75, cy: 0.51, rx: 0.10, ry: 0.07 },
 ];
 
 function randomInCanopy() {
@@ -69,15 +71,16 @@ function randomInCanopy() {
   return { x: 0.50, y: 0.31 };
 }
 
-// Avoid overlapping — thresholds tuned for 350 names at ~8px font in a 780px container.
-// dx=0.085 ≈ 66px wide slot, dy=0.020 ≈ 10px tall slot (just above font height).
-function findPosition(placed, attempts = 300) {
+// Overlap grid — dx matches actual rendered name width (~90px at 9px bold in
+// a 780px container = 0.115). dy keeps rows just one line-height apart (10px = 0.018).
+// 500 attempts before falling back so the dense middle zones get fully packed first.
+function findPosition(placed, attempts = 500) {
   for (let i = 0; i < attempts; i++) {
     const pos = randomInCanopy();
     const tooClose = placed.some(p => {
       const dx = Math.abs(p.x - pos.x);
       const dy = Math.abs(p.y - pos.y);
-      return dx < 0.085 && dy < 0.020;
+      return dx < 0.115 && dy < 0.018;
     });
     if (!tooClose) return pos;
   }
