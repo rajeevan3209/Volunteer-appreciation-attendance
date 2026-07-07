@@ -221,8 +221,8 @@ export default function LuckyDraw() {
       {toast && <div className={`ld-toast ld-toast-${toast.type}`}>{toast.message}</div>}
 
       <header className="ld-header">
-        <h1>Welcome to Pasir Ris Elias CC Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
-        <p>Lucky Draw</p>
+        <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
+        <p>Pasir Ris Elias CC · Lucky Draw</p>
       </header>
 
       <main className="ld-main">

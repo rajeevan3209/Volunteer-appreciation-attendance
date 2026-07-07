@@ -8,7 +8,8 @@ const COLORS = [
 ];
 
 function getCanvasSize() {
-  return Math.min(480, window.innerWidth - 40);
+  const available = Math.min(window.innerHeight - 120, window.innerWidth - 340);
+  return Math.max(320, available);
 }
 
 export default function LuckyDrawBulk() {
@@ -350,7 +351,7 @@ export default function LuckyDrawBulk() {
       x: 0.5, y: 2.2, w: 12.33, h: 1.2,
       fontSize: 40, bold: true, color: GOLD, align: 'center',
     });
-    title.addText('Pasir Ris Elias CC Volunteer Appreciation & Appointment Ceremony 2026', {
+    title.addText('Volunteer Appreciation & Appointment Ceremony 2026', {
       x: 0.5, y: 3.6, w: 12.33, h: 1.2,
       fontSize: 20, color: WHITE, align: 'center',
     });
@@ -468,8 +469,8 @@ export default function LuckyDrawBulk() {
       {toast && <div className={`ldb-toast ldb-toast-${toast.type}`}>{toast.message}</div>}
 
       <header className="ldb-header">
-        <h1>Welcome to Pasir Ris Elias CC Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
-        <p>Bulk Lucky Draw</p>
+        <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
+        <p>Pasir Ris Elias CC · Bulk Lucky Draw</p>
       </header>
 
       <main className="ldb-main">

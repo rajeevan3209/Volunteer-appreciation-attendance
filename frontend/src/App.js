@@ -87,7 +87,8 @@ export default function App() {
     return (
       <div className="app">
         <header className="header">
-          <h1>Welcome to Pasir Ris Elias CC Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
+          <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
+          <p>Pasir Ris Elias CC</p>
                   </header>
         <div className="thankyou-wrapper">
           <div className="thankyou-card">
@@ -140,7 +141,7 @@ export default function App() {
       )}
 
       <header className="header">
-        <h1>Welcome to Pasir Ris Elias CC Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
+        <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
               </header>
 
       <main className="main">
