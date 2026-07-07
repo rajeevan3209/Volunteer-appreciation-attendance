@@ -8,9 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -43,30 +42,26 @@ public class AdminController {
     }
 
     /**
-     * Re-sync lucky_draw from attendance — inserts a PENDING entry for every
-     * attended participant who doesn't already have a lucky_draw row.
-     * Safe to call any time; never deletes existing entries.
+     * Full lucky draw reset — clears all lucky_draw and bulk_draw_selection rows,
+     * then re-populates lucky_draw from attendance with everyone as PENDING.
+     * Use to restart the draw from scratch after a mistake.
      */
     @PostMapping("/reload-lucky-draw")
     public ResponseEntity<?> reloadLuckyDraw() {
-        Set<String> existing = luckyDrawRepository.findAll()
-                .stream()
-                .map(e -> e.getParticipantName())
-                .collect(Collectors.toSet());
+        luckyDrawRepository.deleteAll();
+        bulkDrawRepository.deleteAll();
 
-        long added = attendanceRepository.findAll().stream()
-                .filter(a -> !existing.contains(a.getParticipantName()))
-                .peek(a -> {
-                    LuckyDrawEntry entry = new LuckyDrawEntry();
-                    entry.setParticipantName(a.getParticipantName());
-                    entry.setSubCommittee(a.getSubCommittee());
-                    entry.setStatus(LuckyDrawEntry.Status.PENDING);
-                    luckyDrawRepository.save(entry);
-                })
-                .count();
+        List<com.volunteer.attendance.entity.Attendance> all = attendanceRepository.findAll();
+        all.forEach(a -> {
+            LuckyDrawEntry entry = new LuckyDrawEntry();
+            entry.setParticipantName(a.getParticipantName());
+            entry.setSubCommittee(a.getSubCommittee());
+            entry.setStatus(LuckyDrawEntry.Status.PENDING);
+            luckyDrawRepository.save(entry);
+        });
 
         return ResponseEntity.ok(Map.of(
-                "message", "Lucky draw reloaded — " + added + " participant(s) added"
+                "message", "Lucky draw reset — " + all.size() + " participant(s) reloaded. All previous results cleared."
         ));
     }
 }

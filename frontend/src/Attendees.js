@@ -198,7 +198,7 @@ export default function Attendees() {
               onClick={handleReloadLuckyDraw}
               disabled={attendance.length === 0 || reloadingLuckyDraw}
             >
-              {reloadingLuckyDraw ? '⏳ Reloading…' : '🔄 Reload Lucky Draw'}
+              {reloadingLuckyDraw ? '⏳ Resetting…' : '🔄 Reset Lucky Draw'}
             </button>
           </div>
         </div>
