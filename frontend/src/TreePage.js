@@ -27,25 +27,32 @@ const NAME_COLORS = [
 //    sunburst / circular text ring (which ends at ~y=13%).
 //  • All left zones pulled right, all right zones pulled left vs. previous.
 //  • New lower-centre zone fills the previously empty gap above the trunk.
+// Zones recalibrated from screenshot review (v3):
+//  • All zones kept below y=0.27 — the golden sunburst occupies y=0–27%
+//    and has no leaves; anything above 0.27 was the red-circled problem area.
+//  • Lower-left / lower-right moved outward (cx 0.41→0.29, 0.59→0.71)
+//    to reach the branch-leaf areas the user circled green (empty).
+//  • Centre bulk and mid zones shifted down ~6% to match where leaves
+//    actually are in the image.
 const ZONES = [
-  // top crown — raised above sunburst; narrow so names stay on leaves
-  { cx: 0.50, cy: 0.20, rx: 0.12, ry: 0.07 },
-  // upper-left  (leftmost centre 0.33 → safe at 780 px)
-  { cx: 0.42, cy: 0.26, rx: 0.09, ry: 0.09 },
-  // upper-right (rightmost centre 0.67)
-  { cx: 0.58, cy: 0.26, rx: 0.09, ry: 0.09 },
-  // centre bulk — widest safe zone through the dense middle canopy
-  { cx: 0.50, cy: 0.32, rx: 0.16, ry: 0.12 },
-  // mid-left  (leftmost 0.31)
-  { cx: 0.41, cy: 0.39, rx: 0.10, ry: 0.10 },
-  // mid-right (rightmost 0.69)
-  { cx: 0.59, cy: 0.39, rx: 0.10, ry: 0.10 },
-  // lower-left branch (leftmost 0.33)
-  { cx: 0.41, cy: 0.46, rx: 0.08, ry: 0.07 },
-  // lower-centre — NEW: fills the empty area above the trunk
-  { cx: 0.50, cy: 0.48, rx: 0.14, ry: 0.07 },
-  // lower-right branch (rightmost 0.67)
-  { cx: 0.59, cy: 0.46, rx: 0.08, ry: 0.07 },
+  // top of crown — just below the sunburst ring (y=27–35%)
+  { cx: 0.50, cy: 0.29, rx: 0.12, ry: 0.04 },
+  // upper-left leaf mass
+  { cx: 0.41, cy: 0.33, rx: 0.10, ry: 0.08 },
+  // upper-right leaf mass
+  { cx: 0.59, cy: 0.33, rx: 0.10, ry: 0.08 },
+  // centre canopy bulk (densest green area)
+  { cx: 0.50, cy: 0.39, rx: 0.17, ry: 0.10 },
+  // mid-left
+  { cx: 0.39, cy: 0.44, rx: 0.11, ry: 0.09 },
+  // mid-right
+  { cx: 0.61, cy: 0.44, rx: 0.11, ry: 0.09 },
+  // lower-left branch leaves (green-circled empty area in screenshot)
+  { cx: 0.29, cy: 0.51, rx: 0.09, ry: 0.07 },
+  // lower-centre above trunk
+  { cx: 0.50, cy: 0.51, rx: 0.13, ry: 0.06 },
+  // lower-right branch leaves (green-circled empty area in screenshot)
+  { cx: 0.71, cy: 0.51, rx: 0.09, ry: 0.07 },
 ];
 
 function randomInCanopy() {
