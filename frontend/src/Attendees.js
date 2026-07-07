@@ -13,7 +13,6 @@ export default function Attendees() {
   const [pinError, setPinError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
-  const [reloadingLuckyDraw, setReloadingLuckyDraw] = useState(false);
 
   const ADMIN_PIN = '1986';
 
@@ -65,7 +64,9 @@ export default function Attendees() {
     }
     setActionLoading(true);
     try {
-      const res = await fetch(confirmDialog.endpoint, { method: 'DELETE' });
+      const isPost = confirmDialog.endpoint === '__reload-lucky-draw__';
+      const url = isPost ? '/api/admin/reload-lucky-draw' : confirmDialog.endpoint;
+      const res = await fetch(url, { method: isPost ? 'POST' : 'DELETE' });
       const data = await res.json();
       showToast(data.message);
       await fetchAttendance();
@@ -85,17 +86,13 @@ export default function Attendees() {
     setConfirmDialog(dialog);
   };
 
-  const handleReloadLuckyDraw = async () => {
-    setReloadingLuckyDraw(true);
-    try {
-      const res = await fetch('/api/admin/reload-lucky-draw', { method: 'POST' });
-      const data = await res.json();
-      showToast(data.message);
-    } catch {
-      showToast('Failed to reload lucky draw.', 'error');
-    } finally {
-      setReloadingLuckyDraw(false);
-    }
+  const handleReloadLuckyDraw = () => {
+    handleOpenDialog({
+      icon: '🔄',
+      title: 'Reset Lucky Draw',
+      message: 'This will clear all lucky draw results and bulk draw selections, then reload every attendee as a fresh participant. Use this to restart the draw after a mistake.',
+      endpoint: '__reload-lucky-draw__',
+    });
   };
 
   return (
@@ -196,9 +193,9 @@ export default function Attendees() {
             <button
               className="att-admin-btn reload"
               onClick={handleReloadLuckyDraw}
-              disabled={attendance.length === 0 || reloadingLuckyDraw}
+              disabled={attendance.length === 0}
             >
-              {reloadingLuckyDraw ? '⏳ Resetting…' : '🔄 Reset Lucky Draw'}
+              🔄 Reset Lucky Draw
             </button>
           </div>
         </div>
