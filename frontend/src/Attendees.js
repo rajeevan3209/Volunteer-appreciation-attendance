@@ -85,6 +85,19 @@ export default function Attendees() {
     setConfirmDialog(dialog);
   };
 
+  const handleReloadLuckyDraw = async () => {
+    setReloadingLuckyDraw(true);
+    try {
+      const res = await fetch('/api/admin/reload-lucky-draw', { method: 'POST' });
+      const data = await res.json();
+      showToast(data.message);
+    } catch {
+      showToast('Failed to reload lucky draw.', 'error');
+    } finally {
+      setReloadingLuckyDraw(false);
+    }
+  };
+
   return (
     <div className="att-app">
       {/* Toast */}

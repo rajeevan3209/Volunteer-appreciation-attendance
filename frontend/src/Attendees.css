@@ -255,6 +255,12 @@
   border-color: #ffb74d;
 }
 
+.att-admin-btn.reload {
+  background: white;
+  color: #00695c;
+  border-color: #4db6ac;
+}
+
 /* Confirm overlay */
 .att-overlay {
   position: fixed;
