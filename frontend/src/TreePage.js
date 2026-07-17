@@ -87,32 +87,16 @@ function findPosition(placed, attempts = 500) {
   return randomInCanopy(); // fallback when very crowded
 }
 
-// Trunk zones — the narrow brown trunk sits roughly cx=0.50, y=0.58–0.88
-const TRUNK_ZONES = [
-  { cx: 0.50, cy: 0.63, rx: 0.055, ry: 0.04 },
-  { cx: 0.50, cy: 0.72, rx: 0.050, ry: 0.04 },
-  { cx: 0.50, cy: 0.81, rx: 0.045, ry: 0.04 },
-];
+// Trunk: names centred horizontally at x=0.50, evenly spaced vertically.
+// Trunk occupies roughly y=0.60 – 0.87 in the image.
+const TRUNK_TOP = 0.61;
+const TRUNK_BOT = 0.86;
 
-function randomInTrunk() {
-  for (let attempt = 0; attempt < 200; attempt++) {
-    const zone = TRUNK_ZONES[Math.floor(Math.random() * TRUNK_ZONES.length)];
-    const x = zone.cx + (Math.random() * 2 - 1) * zone.rx;
-    const y = zone.cy + (Math.random() * 2 - 1) * zone.ry;
-    const dx = (x - zone.cx) / zone.rx;
-    const dy = (y - zone.cy) / zone.ry;
-    if (dx * dx + dy * dy <= 1) return { x, y };
-  }
-  return { x: 0.50, y: 0.72 };
-}
-
-function findTrunkPosition(placed) {
-  for (let i = 0; i < 300; i++) {
-    const pos = randomInTrunk();
-    const tooClose = placed.some(p => Math.abs(p.x - pos.x) < 0.09 && Math.abs(p.y - pos.y) < 0.020);
-    if (!tooClose) return pos;
-  }
-  return randomInTrunk();
+function trunkPositions(count) {
+  if (count === 0) return [];
+  if (count === 1) return [{ x: 0.50, y: (TRUNK_TOP + TRUNK_BOT) / 2 }];
+  const gap = (TRUNK_BOT - TRUNK_TOP) / (count - 1);
+  return Array.from({ length: count }, (_, i) => ({ x: 0.50, y: TRUNK_TOP + i * gap }));
 }
 
 export default function TreePage() {
@@ -121,7 +105,6 @@ export default function TreePage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
   const canopyPlacedRef = useRef([]);
-  const trunkPlacedRef = useRef([]);
   const knownIdsRef = useRef(new Set());
 
   const fetchNames = useCallback(async () => {
@@ -134,13 +117,12 @@ export default function TreePage() {
       const newCanopy = [];
       const newTrunk = [];
 
+      // Separate leaders from others
+      const leaderEntries = [];
       newEntries.forEach((a, i) => {
         knownIdsRef.current.add(a.id);
-        const isLeader = a.subCommittee?.trim() === 'Leaders';
-        if (isLeader) {
-          const pos = findTrunkPosition(trunkPlacedRef.current);
-          trunkPlacedRef.current.push(pos);
-          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150 });
+        if (a.subCommittee?.trim() === 'Leaders') {
+          leaderEntries.push({ id: a.id, name: a.participantName, delay: i * 150 });
         } else {
           const pos = findPosition(canopyPlacedRef.current);
           canopyPlacedRef.current.push(pos);
@@ -150,7 +132,15 @@ export default function TreePage() {
       });
 
       if (newCanopy.length) setCanopyNames(prev => [...prev, ...newCanopy]);
-      if (newTrunk.length) setTrunkNames(prev => [...prev, ...newTrunk]);
+
+      // Recalculate all trunk positions centred on the trunk
+      if (leaderEntries.length) {
+        setTrunkNames(prev => {
+          const all = [...prev, ...leaderEntries];
+          const positions = trunkPositions(all.length);
+          return all.map((n, i) => ({ ...n, x: positions[i].x, y: positions[i].y }));
+        });
+      }
     } catch {
       // silently retry
     }
