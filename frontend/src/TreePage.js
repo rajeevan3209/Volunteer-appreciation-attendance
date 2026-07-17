@@ -87,16 +87,15 @@ function findPosition(placed, attempts = 500) {
   return randomInCanopy(); // fallback when very crowded
 }
 
-// Trunk: names centred horizontally at x=0.50, evenly spaced vertically.
-// Trunk occupies roughly y=0.60 – 0.87 in the image.
-const TRUNK_TOP = 0.61;
-const TRUNK_BOT = 0.86;
+// Trunk: names stacked vertically at x=0.50, fixed slot per arrival index.
+// Roots start at ~y=0.87, so cap names at y=0.83 to stay on the bark.
+const TRUNK_START = 0.62;
+const TRUNK_STEP  = 0.055;  // vertical gap between names
+const TRUNK_MAX_Y = 0.83;   // don't go into the roots
 
-function trunkPositions(count) {
-  if (count === 0) return [];
-  if (count === 1) return [{ x: 0.50, y: (TRUNK_TOP + TRUNK_BOT) / 2 }];
-  const gap = (TRUNK_BOT - TRUNK_TOP) / (count - 1);
-  return Array.from({ length: count }, (_, i) => ({ x: 0.50, y: TRUNK_TOP + i * gap }));
+function trunkSlot(index) {
+  const y = TRUNK_START + index * TRUNK_STEP;
+  return { x: 0.50, y: Math.min(y, TRUNK_MAX_Y) };
 }
 
 export default function TreePage() {
@@ -105,6 +104,7 @@ export default function TreePage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
   const canopyPlacedRef = useRef([]);
+  const trunkIndexRef = useRef(0);
   const knownIdsRef = useRef(new Set());
 
   const fetchNames = useCallback(async () => {
@@ -116,13 +116,11 @@ export default function TreePage() {
 
       const newCanopy = [];
       const newTrunk = [];
-
-      // Separate leaders from others
-      const leaderEntries = [];
       newEntries.forEach((a, i) => {
         knownIdsRef.current.add(a.id);
         if (a.subCommittee?.trim() === 'Leaders') {
-          leaderEntries.push({ id: a.id, name: a.participantName, delay: i * 150 });
+          const pos = trunkSlot(trunkIndexRef.current++);
+          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150 });
         } else {
           const pos = findPosition(canopyPlacedRef.current);
           canopyPlacedRef.current.push(pos);
@@ -132,15 +130,7 @@ export default function TreePage() {
       });
 
       if (newCanopy.length) setCanopyNames(prev => [...prev, ...newCanopy]);
-
-      // Recalculate all trunk positions centred on the trunk
-      if (leaderEntries.length) {
-        setTrunkNames(prev => {
-          const all = [...prev, ...leaderEntries];
-          const positions = trunkPositions(all.length);
-          return all.map((n, i) => ({ ...n, x: positions[i].x, y: positions[i].y }));
-        });
-      }
+      if (newTrunk.length) setTrunkNames(prev => [...prev, ...newTrunk]);
     } catch {
       // silently retry
     }
