@@ -117,7 +117,7 @@
   100% { opacity: 1;   transform: translate(-50%, -50%) scale(1); }
 }
 
-/* Fullscreen button */
+/* Fullscreen button — hidden until the tree is hovered */
 .tree-fullscreen-btn {
   position: absolute;
   bottom: 12px;
@@ -134,8 +134,13 @@
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
-  transition: background 0.15s, transform 0.15s;
+  transition: opacity 0.2s, transform 0.15s;
   z-index: 10;
+  opacity: 0;
+}
+
+.tree-inner:hover .tree-fullscreen-btn {
+  opacity: 1;
 }
 
 .tree-fullscreen-btn:hover {

@@ -20,8 +20,10 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Always reload participants from CSV on startup so the CSV is always the source of truth.
-        // Attendance/lucky draw data is untouched.
+        if (participantRepository.count() > 0) {
+            log.info("Participants already loaded, skipping CSV import.");
+            return;
+        }
         loadFromCsv();
     }
 
