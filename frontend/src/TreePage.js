@@ -87,15 +87,17 @@ function findPosition(placed, attempts = 500) {
   return randomInCanopy(); // fallback when very crowded
 }
 
-// Trunk: names stacked vertically at x=0.50, fixed slot per arrival index.
-// Roots start at ~y=0.87, so cap names at y=0.83 to stay on the bark.
-const TRUNK_START = 0.62;
-const TRUNK_STEP  = 0.055;  // vertical gap between names
-const TRUNK_MAX_Y = 0.83;   // don't go into the roots
-
-function trunkSlot(index) {
-  const y = TRUNK_START + index * TRUNK_STEP;
-  return { x: 0.50, y: Math.min(y, TRUNK_MAX_Y) };
+// Trunk: random placement within the bark area, avoiding roots and overlaps.
+// The trunk is narrow — cx≈0.50, x range ±0.04, y from 0.60 to 0.83.
+function randomTrunkPos(placed) {
+  for (let i = 0; i < 400; i++) {
+    const x = 0.50 + (Math.random() * 2 - 1) * 0.038;
+    const y = 0.60 + Math.random() * 0.23; // 0.60–0.83, stays above roots
+    const tooClose = placed.some(p => Math.abs(p.x - x) < 0.07 && Math.abs(p.y - y) < 0.022);
+    if (!tooClose) return { x, y };
+  }
+  // fallback: centre of trunk
+  return { x: 0.50, y: 0.60 + Math.random() * 0.23 };
 }
 
 export default function TreePage() {
@@ -104,7 +106,7 @@ export default function TreePage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
   const canopyPlacedRef = useRef([]);
-  const trunkIndexRef = useRef(0);
+  const trunkPlacedRef = useRef([]);
   const knownIdsRef = useRef(new Set());
 
   const fetchNames = useCallback(async () => {
@@ -119,7 +121,8 @@ export default function TreePage() {
       newEntries.forEach((a, i) => {
         knownIdsRef.current.add(a.id);
         if (a.subCommittee?.trim() === 'Leaders') {
-          const pos = trunkSlot(trunkIndexRef.current++);
+          const pos = randomTrunkPos(trunkPlacedRef.current);
+          trunkPlacedRef.current.push(pos);
           newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150 });
         } else {
           const pos = findPosition(canopyPlacedRef.current);
