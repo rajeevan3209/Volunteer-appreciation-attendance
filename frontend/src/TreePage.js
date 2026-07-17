@@ -35,26 +35,21 @@ const NAME_COLORS = [
 //  • Centre bulk and mid zones shifted down ~6% to match where leaves
 //    actually are in the image.
 // v4 — expanded left boundary + raised top crown + right mirror kept symmetric
+// Zones calibrated to the blue-circled canopy boundary in the screenshot.
+// Key constraints:
+//   left edge:   nothing below x≈0.28 (lower-left branch tip)
+//   right edge:  nothing above x≈0.82 (lower-right branch tip)
+//   bottom:      nothing below y≈0.53 (trunk starts there)
 const ZONES = [
-  // top crown — raised from cy=0.29 to cy=0.26 and taller (ry 0.04→0.06)
-  // so the very top of the leaf mass fills with names
-  { cx: 0.50, cy: 0.26, rx: 0.13, ry: 0.06 },
-  // upper-left — shifted left (cx 0.41→0.37) and wider (rx 0.10→0.13)
-  { cx: 0.37, cy: 0.33, rx: 0.13, ry: 0.08 },
-  // upper-right — mirror
-  { cx: 0.63, cy: 0.33, rx: 0.13, ry: 0.08 },
-  // centre bulk — unchanged, already good
-  { cx: 0.50, cy: 0.39, rx: 0.17, ry: 0.10 },
-  // mid-left — shifted left (cx 0.39→0.35) and wider (rx 0.11→0.13)
-  { cx: 0.35, cy: 0.44, rx: 0.13, ry: 0.09 },
-  // mid-right — mirror
-  { cx: 0.65, cy: 0.44, rx: 0.13, ry: 0.09 },
-  // lower-left branch — shifted left (cx 0.29→0.25, rx 0.09→0.10)
-  { cx: 0.25, cy: 0.51, rx: 0.10, ry: 0.07 },
-  // lower-centre — unchanged
-  { cx: 0.50, cy: 0.51, rx: 0.13, ry: 0.06 },
-  // lower-right branch — mirror
-  { cx: 0.75, cy: 0.51, rx: 0.10, ry: 0.07 },
+  { cx: 0.50, cy: 0.26, rx: 0.12, ry: 0.06 },  // top crown
+  { cx: 0.38, cy: 0.33, rx: 0.11, ry: 0.08 },  // upper-left
+  { cx: 0.62, cy: 0.33, rx: 0.11, ry: 0.08 },  // upper-right
+  { cx: 0.50, cy: 0.39, rx: 0.15, ry: 0.09 },  // centre bulk
+  { cx: 0.36, cy: 0.44, rx: 0.09, ry: 0.07 },  // mid-left
+  { cx: 0.64, cy: 0.44, rx: 0.09, ry: 0.07 },  // mid-right
+  { cx: 0.31, cy: 0.49, rx: 0.07, ry: 0.04 },  // lower-left branch
+  { cx: 0.50, cy: 0.48, rx: 0.10, ry: 0.04 },  // lower-centre (raised to stay above trunk)
+  { cx: 0.69, cy: 0.49, rx: 0.07, ry: 0.04 },  // lower-right branch
 ];
 
 function randomInCanopy() {
@@ -87,17 +82,16 @@ function findPosition(placed, attempts = 500) {
   return randomInCanopy(); // fallback when very crowded
 }
 
-// Trunk: random placement within the bark area, avoiding roots and overlaps.
-// The trunk is narrow — cx≈0.50, x range ±0.04, y from 0.60 to 0.83.
+// Trunk: random within the dark-green circled bark area.
+// Trunk sits at x≈0.46–0.55, y≈0.58–0.80 (above roots).
 function randomTrunkPos(placed) {
   for (let i = 0; i < 400; i++) {
-    const x = 0.50 + (Math.random() * 2 - 1) * 0.038;
-    const y = 0.60 + Math.random() * 0.23; // 0.60–0.83, stays above roots
-    const tooClose = placed.some(p => Math.abs(p.x - x) < 0.07 && Math.abs(p.y - y) < 0.022);
+    const x = 0.505 + (Math.random() * 2 - 1) * 0.028;
+    const y = 0.59 + Math.random() * 0.20; // 0.59–0.79, well above roots
+    const tooClose = placed.some(p => Math.abs(p.x - x) < 0.06 && Math.abs(p.y - y) < 0.022);
     if (!tooClose) return { x, y };
   }
-  // fallback: centre of trunk
-  return { x: 0.50, y: 0.60 + Math.random() * 0.23 };
+  return { x: 0.505, y: 0.59 + Math.random() * 0.20 };
 }
 
 export default function TreePage() {
