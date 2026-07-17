@@ -1,5 +1,6 @@
 package com.volunteer.attendance.controller;
 
+import com.volunteer.attendance.config.DataLoader;
 import com.volunteer.attendance.entity.LuckyDrawEntry;
 import com.volunteer.attendance.repository.AttendanceRepository;
 import com.volunteer.attendance.repository.BulkDrawRepository;
@@ -20,6 +21,7 @@ public class AdminController {
     private final AttendanceRepository attendanceRepository;
     private final LuckyDrawRepository luckyDrawRepository;
     private final BulkDrawRepository bulkDrawRepository;
+    private final DataLoader dataLoader;
 
     /** Clear attendance + lucky_draw + bulk_draw_selection */
     @DeleteMapping("/attendance")
@@ -39,6 +41,21 @@ public class AdminController {
         luckyDrawRepository.deleteAll();
         bulkDrawRepository.deleteAll();
         return ResponseEntity.ok(Map.of("message", "Cleared " + attendance + " attendance records and all lucky draw data"));
+    }
+
+    /**
+     * Wipe all participants and reload from the bundled participants.csv.
+     * Also clears attendance, lucky draw, and bulk draw so data stays consistent.
+     */
+    @PostMapping("/reload-participants")
+    public ResponseEntity<?> reloadParticipants() throws Exception {
+        attendanceRepository.deleteAll();
+        luckyDrawRepository.deleteAll();
+        bulkDrawRepository.deleteAll();
+        int count = dataLoader.loadFromCsv();
+        return ResponseEntity.ok(Map.of(
+                "message", count + " participants loaded from CSV. All attendance and draw data cleared."
+        ));
     }
 
     /**

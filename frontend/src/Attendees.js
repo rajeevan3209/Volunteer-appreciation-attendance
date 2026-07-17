@@ -64,8 +64,12 @@ export default function Attendees() {
     }
     setActionLoading(true);
     try {
-      const isPost = confirmDialog.endpoint === '__reload-lucky-draw__';
-      const url = isPost ? '/api/admin/reload-lucky-draw' : confirmDialog.endpoint;
+      const postEndpoints = {
+        '__reload-lucky-draw__': '/api/admin/reload-lucky-draw',
+        '__reload-participants__': '/api/admin/reload-participants',
+      };
+      const isPost = confirmDialog.endpoint in postEndpoints;
+      const url = isPost ? postEndpoints[confirmDialog.endpoint] : confirmDialog.endpoint;
       const res = await fetch(url, { method: isPost ? 'POST' : 'DELETE' });
       const data = await res.json();
       showToast(data.message);
@@ -92,6 +96,15 @@ export default function Attendees() {
       title: 'Reset Lucky Draw',
       message: 'This will clear all lucky draw results and bulk draw selections, then reload every attendee as a fresh participant. Use this to restart the draw after a mistake.',
       endpoint: '__reload-lucky-draw__',
+    });
+  };
+
+  const handleReloadParticipants = () => {
+    handleOpenDialog({
+      icon: '📋',
+      title: 'Reload Participants from CSV',
+      message: 'This will wipe all participants, attendance records, and draw data, then reload the participant list fresh from the CSV file. This cannot be undone.',
+      endpoint: '__reload-participants__',
     });
   };
 
@@ -196,6 +209,12 @@ export default function Attendees() {
               disabled={attendance.length === 0}
             >
               🔄 Reset Lucky Draw
+            </button>
+            <button
+              className="att-admin-btn reload-csv"
+              onClick={handleReloadParticipants}
+            >
+              📋 Reload Participants
             </button>
           </div>
         </div>

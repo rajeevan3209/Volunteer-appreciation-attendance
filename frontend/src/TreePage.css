@@ -95,6 +95,20 @@
   line-height: 1;
 }
 
+/* Leaders — displayed on the trunk in gold, slightly larger */
+.tree-trunk-name {
+  color: #FFE500;
+  font-size: clamp(8px, 0.9vw, 11px);
+  font-weight: 800;
+  text-shadow:
+    0 0 4px #000,
+    0 0 8px rgba(0,0,0,0.9),
+    1px 1px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000;
+}
+
 @keyframes settleIntoTree {
   0%   { opacity: 0;   transform: translate(-50%, -50%) scale(5); }
   25%  { opacity: 1;   transform: translate(-50%, -50%) scale(4.2); }

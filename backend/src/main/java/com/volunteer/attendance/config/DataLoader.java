@@ -24,19 +24,18 @@ public class DataLoader implements CommandLineRunner {
             log.info("Participants already loaded, skipping CSV import.");
             return;
         }
+        loadFromCsv();
+    }
 
+    public int loadFromCsv() throws Exception {
+        participantRepository.deleteAll();
         try (CSVReader reader = new CSVReader(
                 new InputStreamReader(new ClassPathResource("participants.csv").getInputStream()))) {
 
             String[] line;
-            boolean header = true;
             int count = 0;
 
             while ((line = reader.readNext()) != null) {
-                if (header) {
-                    header = false;
-                    continue;
-                }
                 if (line.length >= 2) {
                     String name = line[0].trim();
                     String subCommittee = line[1].trim();
@@ -47,6 +46,7 @@ public class DataLoader implements CommandLineRunner {
                 }
             }
             log.info("Loaded {} participants from CSV.", count);
+            return count;
         }
     }
 }

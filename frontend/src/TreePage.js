@@ -87,11 +87,41 @@ function findPosition(placed, attempts = 500) {
   return randomInCanopy(); // fallback when very crowded
 }
 
+// Trunk zones — the narrow brown trunk sits roughly cx=0.50, y=0.58–0.88
+const TRUNK_ZONES = [
+  { cx: 0.50, cy: 0.63, rx: 0.055, ry: 0.04 },
+  { cx: 0.50, cy: 0.72, rx: 0.050, ry: 0.04 },
+  { cx: 0.50, cy: 0.81, rx: 0.045, ry: 0.04 },
+];
+
+function randomInTrunk() {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const zone = TRUNK_ZONES[Math.floor(Math.random() * TRUNK_ZONES.length)];
+    const x = zone.cx + (Math.random() * 2 - 1) * zone.rx;
+    const y = zone.cy + (Math.random() * 2 - 1) * zone.ry;
+    const dx = (x - zone.cx) / zone.rx;
+    const dy = (y - zone.cy) / zone.ry;
+    if (dx * dx + dy * dy <= 1) return { x, y };
+  }
+  return { x: 0.50, y: 0.72 };
+}
+
+function findTrunkPosition(placed) {
+  for (let i = 0; i < 300; i++) {
+    const pos = randomInTrunk();
+    const tooClose = placed.some(p => Math.abs(p.x - pos.x) < 0.09 && Math.abs(p.y - pos.y) < 0.020);
+    if (!tooClose) return pos;
+  }
+  return randomInTrunk();
+}
+
 export default function TreePage() {
-  const [names, setNames] = useState([]);
+  const [canopyNames, setCanopyNames] = useState([]);
+  const [trunkNames, setTrunkNames] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const containerRef = useRef(null); // [{ id, name, x, y, delay }]
-  const placedRef = useRef([]);
+  const containerRef = useRef(null);
+  const canopyPlacedRef = useRef([]);
+  const trunkPlacedRef = useRef([]);
   const knownIdsRef = useRef(new Set());
 
   const fetchNames = useCallback(async () => {
@@ -101,15 +131,26 @@ export default function TreePage() {
       const newEntries = data.filter(a => !knownIdsRef.current.has(a.id));
       if (newEntries.length === 0) return;
 
-      const newNodes = newEntries.map((a, i) => {
-        const pos = findPosition(placedRef.current);
-        placedRef.current.push(pos);
+      const newCanopy = [];
+      const newTrunk = [];
+
+      newEntries.forEach((a, i) => {
         knownIdsRef.current.add(a.id);
-        const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
-        return { id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150, color };
+        const isLeader = a.subCommittee?.trim() === 'Leaders';
+        if (isLeader) {
+          const pos = findTrunkPosition(trunkPlacedRef.current);
+          trunkPlacedRef.current.push(pos);
+          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150 });
+        } else {
+          const pos = findPosition(canopyPlacedRef.current);
+          canopyPlacedRef.current.push(pos);
+          const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
+          newCanopy.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150, color });
+        }
       });
 
-      setNames(prev => [...prev, ...newNodes]);
+      if (newCanopy.length) setCanopyNames(prev => [...prev, ...newCanopy]);
+      if (newTrunk.length) setTrunkNames(prev => [...prev, ...newTrunk]);
     } catch {
       // silently retry
     }
@@ -140,14 +181,14 @@ export default function TreePage() {
       <header className="tree-header">
         <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
         <p>Pasir Ris Elias Community Club · Our Volunteers</p>
-        <span className="tree-count">{names.length} volunteer{names.length !== 1 ? 's' : ''} on the tree</span>
+        <span className="tree-count">{canopyNames.length + trunkNames.length} volunteer{canopyNames.length + trunkNames.length !== 1 ? 's' : ''} on the tree</span>
       </header>
 
       <main className="tree-main">
         <div className="tree-container" ref={containerRef}>
           <div className="tree-inner">
             <img src="/tree.png" alt="Tree" className="tree-img" draggable={false} />
-            {names.map(n => (
+            {canopyNames.map(n => (
               <span
                 key={n.id}
                 className="tree-name"
@@ -156,15 +197,20 @@ export default function TreePage() {
                   top: `${n.y * 100}%`,
                   animationDelay: `${n.delay}ms`,
                   color: n.color,
-                  // Dark outline on all 4 sides so the name reads on any leaf colour
-                  textShadow: `
-                    0 0 3px #000,
-                    0 0 6px rgba(0,0,0,0.85),
-                    1px 1px 0 #000,
-                    -1px -1px 0 #000,
-                    1px -1px 0 #000,
-                    -1px  1px 0 #000
-                  `.trim(),
+                  textShadow: `0 0 3px #000, 0 0 6px rgba(0,0,0,0.85), 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000`,
+                }}
+              >
+                {n.name}
+              </span>
+            ))}
+            {trunkNames.map(n => (
+              <span
+                key={n.id}
+                className="tree-name tree-trunk-name"
+                style={{
+                  left: `${n.x * 100}%`,
+                  top: `${n.y * 100}%`,
+                  animationDelay: `${n.delay}ms`,
                 }}
               >
                 {n.name}
