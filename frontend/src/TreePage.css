@@ -77,12 +77,12 @@
   pointer-events: none;
 }
 
-/* Name labels — sized for up to 350 names.
-   clamp(7px, 0.75vw, 9px): 7 px on small screens, ~9 px at 780 px wide,
-   capped at 9 px so names stay dense and the tree image shows through. */
+/* Name labels — sized for 270+ names.
+   clamp(6px, 0.6vw, 7px): ~7 px at 780 px wide, fitting most names within
+   the 0.052-fraction grid step (~40 px per cell at that container width). */
 .tree-name {
   position: absolute;
-  font-size: clamp(7px, 0.75vw, 9px);
+  font-size: clamp(6px, 0.6vw, 7px);
   font-weight: 700;
   font-family: -apple-system, 'Segoe UI', sans-serif;
   white-space: nowrap;
