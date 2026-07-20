@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './TreePage.css';
 
 const API = '';
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 2000;
 
 // High-contrast colours that stand out on the dark-green tree canopy.
 // Each gets a strong dark shadow in the JSX so it's legible on any leaf colour.
