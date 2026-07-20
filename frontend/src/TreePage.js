@@ -117,7 +117,8 @@ export default function TreePage() {
         if (a.subCommittee?.trim() === 'Leaders') {
           const pos = randomTrunkPos(trunkPlacedRef.current);
           trunkPlacedRef.current.push(pos);
-          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150 });
+          const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
+          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150, color });
         } else {
           const pos = findPosition(canopyPlacedRef.current);
           canopyPlacedRef.current.push(pos);
@@ -188,6 +189,7 @@ export default function TreePage() {
                   left: `${n.x * 100}%`,
                   top: `${n.y * 100}%`,
                   animationDelay: `${n.delay}ms`,
+                  color: n.color,
                 }}
               >
                 {n.name}

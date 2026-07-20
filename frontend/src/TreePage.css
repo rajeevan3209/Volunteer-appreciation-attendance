@@ -95,9 +95,8 @@
   line-height: 1;
 }
 
-/* Leaders — displayed on the trunk in gold, slightly larger */
+/* Leaders — displayed on the trunk, slightly larger */
 .tree-trunk-name {
-  color: #FFE500;
   font-size: clamp(8px, 0.9vw, 11px);
   font-weight: 800;
   text-shadow:
