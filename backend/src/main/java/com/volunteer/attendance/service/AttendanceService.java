@@ -54,8 +54,9 @@ public class AttendanceService {
         attendance.setSubCommittee(subCommittee);
         Attendance saved = attendanceRepository.save(attendance);
 
-        // Also insert into lucky draw as PENDING (if not already there)
-        if (!luckyDrawRepository.existsByParticipantName(participantName)) {
+        // Also insert into lucky draw as PENDING (if not already there, and not a Leader)
+        if (!"Leaders".equalsIgnoreCase(subCommittee.trim()) &&
+                !luckyDrawRepository.existsByParticipantName(participantName)) {
             LuckyDrawEntry entry = new LuckyDrawEntry();
             entry.setParticipantName(participantName);
             entry.setSubCommittee(subCommittee);

@@ -69,16 +69,18 @@ public class AdminController {
         bulkDrawRepository.deleteAll();
 
         List<com.volunteer.attendance.entity.Attendance> all = attendanceRepository.findAll();
-        all.forEach(a -> {
-            LuckyDrawEntry entry = new LuckyDrawEntry();
-            entry.setParticipantName(a.getParticipantName());
-            entry.setSubCommittee(a.getSubCommittee());
-            entry.setStatus(LuckyDrawEntry.Status.PENDING);
-            luckyDrawRepository.save(entry);
-        });
+        long added = all.stream()
+                .filter(a -> !"Leaders".equalsIgnoreCase(a.getSubCommittee().trim()))
+                .peek(a -> {
+                    LuckyDrawEntry entry = new LuckyDrawEntry();
+                    entry.setParticipantName(a.getParticipantName());
+                    entry.setSubCommittee(a.getSubCommittee());
+                    entry.setStatus(LuckyDrawEntry.Status.PENDING);
+                    luckyDrawRepository.save(entry);
+                }).count();
 
         return ResponseEntity.ok(Map.of(
-                "message", "Lucky draw reset — " + all.size() + " participant(s) reloaded. All previous results cleared."
+                "message", "Lucky draw reset — " + added + " participant(s) reloaded (Leaders excluded). All previous results cleared."
         ));
     }
 }
