@@ -122,8 +122,12 @@ export default function TreePage() {
         }
       });
 
-      if (newCanopy.length) setCanopyNames(prev => [...prev, ...newCanopy]);
-      if (newTrunk.length) setTrunkNames(prev => [...prev, ...newTrunk]);
+      if (newCanopy.length || newTrunk.length) {
+        setTimeout(() => {
+          if (newCanopy.length) setCanopyNames(prev => [...prev, ...newCanopy]);
+          if (newTrunk.length) setTrunkNames(prev => [...prev, ...newTrunk]);
+        }, 3000);
+      }
     } catch {
       // silently retry
     }
