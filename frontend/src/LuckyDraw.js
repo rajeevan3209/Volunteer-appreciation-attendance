@@ -21,8 +21,10 @@ export default function LuckyDraw() {
   const [actionLoading, setActionLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [canvasSize, setCanvasSize] = useState(getCanvasSize());
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const canvasRef = useRef(null);
+  const appRef = useRef(null);
   const spinAngleRef = useRef(0);
   const animFrameRef = useRef(null);
   const wheelRef = useRef([]);
@@ -32,6 +34,17 @@ export default function LuckyDraw() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) appRef.current?.requestFullscreen();
+    else document.exitFullscreen();
+  };
 
   const showToast = (message, type = 'error') => {
     setToast({ message, type });
@@ -217,12 +230,15 @@ export default function LuckyDraw() {
   };
 
   return (
-    <div className="ld-app">
+    <div className="ld-app" ref={appRef}>
       {toast && <div className={`ld-toast ld-toast-${toast.type}`}>{toast.message}</div>}
 
       <header className="ld-header">
         <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
         <p>Pasir Ris Elias Community Club · Lucky Draw</p>
+        <button className="ld-fullscreen-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+          {isFullscreen ? '⊠' : '⤢'}
+        </button>
       </header>
 
       <main className="ld-main">

@@ -31,7 +31,10 @@ export default function LuckyDrawBulk() {
   const [bulkPicked, setBulkPicked] = useState(0);
   const [currentRoundDone, setCurrentRoundDone] = useState(false);
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const canvasRef = useRef(null);
+  const appRef = useRef(null);
   const spinAngleRef = useRef(0);
   const animFrameRef = useRef(null);
   const wheelRef = useRef([]);
@@ -43,6 +46,17 @@ export default function LuckyDrawBulk() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) appRef.current?.requestFullscreen();
+    else document.exitFullscreen();
+  };
 
   const showToast = (message, type = 'error') => {
     setToast({ message, type });
@@ -465,12 +479,15 @@ export default function LuckyDrawBulk() {
   const totalWinners = rounds.reduce((s, r) => s + r.winners.length, 0);
 
   return (
-    <div className="ldb-app">
+    <div className="ldb-app" ref={appRef}>
       {toast && <div className={`ldb-toast ldb-toast-${toast.type}`}>{toast.message}</div>}
 
       <header className="ldb-header">
         <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
         <p>Pasir Ris Elias Community Club · Bulk Lucky Draw</p>
+        <button className="ldb-fullscreen-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+          {isFullscreen ? '⊠' : '⤢'}
+        </button>
       </header>
 
       <main className="ldb-main">

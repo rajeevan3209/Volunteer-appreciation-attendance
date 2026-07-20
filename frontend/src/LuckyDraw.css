@@ -8,6 +8,7 @@
   background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
   padding: 20px 24px;
   box-shadow: 0 2px 12px rgba(46, 125, 50, 0.3);
+  position: relative;
 }
 
 .ld-header h1 {
@@ -22,6 +23,36 @@
   font-size: 0.875rem;
   margin-top: 3px;
 }
+
+/* Fullscreen button — hidden until header is hovered */
+.ld-fullscreen-btn {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.4);
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.15s;
+}
+.ld-header:hover .ld-fullscreen-btn { opacity: 1; }
+.ld-fullscreen-btn:hover { background: rgba(255,255,255,0.3); }
+
+/* Fullscreen: fill screen with app background */
+.ld-app:fullscreen {
+  background: linear-gradient(160deg, #e8f5e9 0%, #c8e6c9 100%);
+  overflow-y: auto;
+}
+.ld-app:fullscreen .ld-fullscreen-btn { opacity: 1; }
 
 /* Main — fill remaining viewport height */
 .ld-main {
