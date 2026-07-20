@@ -44,7 +44,7 @@ public class AdminController {
     }
 
     /**
-     * Wipe all participants and reload from the bundled participants.csv.
+     * Wipe all participants and reload from the bundled participants.xlsx.
      * Also clears attendance, lucky draw, and bulk draw so data stays consistent.
      */
     @PostMapping("/reload-participants")

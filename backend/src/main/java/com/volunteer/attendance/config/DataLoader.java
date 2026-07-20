@@ -30,7 +30,7 @@ public class DataLoader implements CommandLineRunner {
     public int loadFromCsv() throws Exception {
         participantRepository.deleteAll();
         try (CSVReader reader = new CSVReader(
-                new InputStreamReader(new ClassPathResource("participants.csv").getInputStream()))) {
+                new InputStreamReader(new ClassPathResource("participants.xlsx").getInputStream()))) {
 
             String[] line;
             int count = 0;
