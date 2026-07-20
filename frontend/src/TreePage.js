@@ -17,24 +17,24 @@ const NAME_COLORS = [
   '#FFA07A',   // salmon  — warm pastel
 ];
 
-// Canopy zones — ellipses in fractional (0–1) container coordinates.
-// Expanded to provide 280+ grid slots for 270+ names at smaller font.
+// Canopy zones — calibrated to the actual leaf boundary in the tree image.
+// Do NOT expand these: the upper-left/right zones already reach the sky edge.
 const ZONES = [
-  { cx: 0.50, cy: 0.26, rx: 0.14, ry: 0.07 },  // top crown
-  { cx: 0.38, cy: 0.33, rx: 0.13, ry: 0.10 },  // upper-left
-  { cx: 0.62, cy: 0.33, rx: 0.13, ry: 0.10 },  // upper-right
-  { cx: 0.50, cy: 0.39, rx: 0.17, ry: 0.11 },  // centre bulk
-  { cx: 0.36, cy: 0.44, rx: 0.11, ry: 0.08 },  // mid-left
-  { cx: 0.64, cy: 0.44, rx: 0.11, ry: 0.08 },  // mid-right
-  { cx: 0.31, cy: 0.49, rx: 0.08, ry: 0.05 },  // lower-left branch
-  { cx: 0.50, cy: 0.48, rx: 0.12, ry: 0.05 },  // lower-centre
-  { cx: 0.69, cy: 0.49, rx: 0.08, ry: 0.05 },  // lower-right branch
+  { cx: 0.50, cy: 0.26, rx: 0.12, ry: 0.06 },  // top crown
+  { cx: 0.38, cy: 0.33, rx: 0.11, ry: 0.08 },  // upper-left
+  { cx: 0.62, cy: 0.33, rx: 0.11, ry: 0.08 },  // upper-right
+  { cx: 0.50, cy: 0.39, rx: 0.15, ry: 0.09 },  // centre bulk
+  { cx: 0.36, cy: 0.44, rx: 0.09, ry: 0.07 },  // mid-left
+  { cx: 0.64, cy: 0.44, rx: 0.09, ry: 0.07 },  // mid-right
+  { cx: 0.31, cy: 0.49, rx: 0.07, ry: 0.04 },  // lower-left branch
+  { cx: 0.50, cy: 0.48, rx: 0.10, ry: 0.04 },  // lower-centre
+  { cx: 0.69, cy: 0.49, rx: 0.07, ry: 0.04 },  // lower-right branch
 ];
 
-// Pre-build a shuffled staggered grid of valid canopy positions (~286 slots).
-// Guarantees no slot overlap — each name gets a unique cell.
+// Pre-build a shuffled staggered grid (~290 slots).
+// Tighter step (0.044) fills the safe zones densely enough for 272+ names.
 function buildCanopyGrid() {
-  const X_STEP = 0.052;
+  const X_STEP = 0.044;
   const Y_STEP = 0.010;
   const positions = [];
   let row = 0;
