@@ -70,7 +70,7 @@ public class AdminController {
 
         List<com.volunteer.attendance.entity.Attendance> all = attendanceRepository.findAll();
         long added = all.stream()
-                .filter(a -> !"Leaders".equalsIgnoreCase(a.getSubCommittee().trim()))
+                .filter(a -> !"Leaders".equalsIgnoreCase(a.getSubCommittee().split(",")[0].trim()))
                 .peek(a -> {
                     LuckyDrawEntry entry = new LuckyDrawEntry();
                     entry.setParticipantName(a.getParticipantName());

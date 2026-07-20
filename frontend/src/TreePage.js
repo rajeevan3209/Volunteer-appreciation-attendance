@@ -114,7 +114,7 @@ export default function TreePage() {
       const newTrunk = [];
       newEntries.forEach((a, i) => {
         knownIdsRef.current.add(a.id);
-        if (a.subCommittee?.trim() === 'Leaders') {
+        if (a.subCommittee?.split(',')[0].trim() === 'Leaders') {
           const pos = randomTrunkPos(trunkPlacedRef.current);
           trunkPlacedRef.current.push(pos);
           const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
