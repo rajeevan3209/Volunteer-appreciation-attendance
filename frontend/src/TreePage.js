@@ -110,14 +110,17 @@ export default function TreePage() {
           const pos = randomTrunkPos(trunkPlacedRef.current);
           trunkPlacedRef.current.push(pos);
           const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
-          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150, color });
+          // Cap stagger at 4 s for large batches so all names appear quickly
+          const delay = Math.min(i * (newEntries.length > 30 ? 20 : 150), 4000);
+          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay, color });
         } else {
           const grid = canopyGridRef.current;
           const idx = canopyIndexRef.current;
           const pos = idx < grid.length ? grid[idx] : randomInCanopy();
           canopyIndexRef.current++;
           const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
-          newCanopy.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay: i * 150, color });
+          const delay = Math.min(i * (newEntries.length > 30 ? 20 : 150), 4000);
+          newCanopy.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay, color });
         }
       });
 
@@ -147,7 +150,12 @@ export default function TreePage() {
   };
 
   useEffect(() => {
-    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const onChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      // Force a re-render after the fullscreen transition completes so names
+      // reposition correctly relative to the resized tree-inner container.
+      setTimeout(() => setCanopyNames(prev => [...prev]), 350);
+    };
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);

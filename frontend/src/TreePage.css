@@ -88,7 +88,6 @@
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  will-change: transform, opacity;
   animation: settleIntoTree 2s ease-out forwards;
   letter-spacing: 0.1px;
   transform-origin: center center;
