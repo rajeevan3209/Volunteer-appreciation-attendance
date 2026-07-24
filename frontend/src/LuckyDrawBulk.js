@@ -484,7 +484,7 @@ export default function LuckyDrawBulk() {
 
       <header className="ldb-header">
         <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
-        <p>Pasir Ris Elias Community Club · Bulk Lucky Draw</p>
+        <p>Pasir Ris West · Bulk Lucky Draw</p>
         <button className="ldb-fullscreen-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
           {isFullscreen ? '⊠' : '⤢'}
         </button>

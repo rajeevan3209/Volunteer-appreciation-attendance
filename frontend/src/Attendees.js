@@ -152,7 +152,7 @@ export default function Attendees() {
       <header className="att-header">
         <div className="att-header-content">
           <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
-          <p>Pasir Ris Elias Community Club · Admin</p>
+          <p>Pasir Ris West · Admin</p>
         </div>
         <div className="att-header-actions">
           <button className="att-btn-icon" onClick={fetchAttendance} title="Refresh">↺</button>

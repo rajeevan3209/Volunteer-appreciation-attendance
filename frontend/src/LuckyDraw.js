@@ -235,7 +235,7 @@ export default function LuckyDraw() {
 
       <header className="ld-header">
         <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
-        <p>Pasir Ris Elias Community Club · Lucky Draw</p>
+        <p>Pasir Ris West · Lucky Draw</p>
         <button className="ld-fullscreen-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
           {isFullscreen ? '⊠' : '⤢'}
         </button>
