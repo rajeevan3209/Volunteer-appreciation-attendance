@@ -252,7 +252,7 @@ export default function LuckyDrawBulk() {
     if (!res.ok) throw new Error('API error');
   };
 
-  const saveBulkSelection = async (roundNum, rankInRound, winner) => {
+  const saveBulkSelection = async (roundNum, rankInRound, winner, prize) => {
     await fetch('/api/bulk-draw', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -261,7 +261,7 @@ export default function LuckyDrawBulk() {
         rankInRound,
         participantName: winner.name,
         subCommittee: winner.subCommittee,
-        prize: winner.prize ?? '',
+        prize: prize || '',
       }),
     });
   };
@@ -295,7 +295,7 @@ export default function LuckyDrawBulk() {
       try {
         await Promise.all([
           acceptViaAPI(winner),
-          saveBulkSelection(thisRound, rank, winner),
+          saveBulkSelection(thisRound, rank, winner, prize),
         ]);
       } catch { /* best effort — UI continues regardless */ }
 
