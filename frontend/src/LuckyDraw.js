@@ -58,11 +58,26 @@ export default function LuckyDraw() {
 
   const loadData = useCallback(async () => {
     try {
-      const res = await fetch('/api/lucky-draw');
-      const all = await res.json();
+      const [ldRes, bulkRes] = await Promise.all([
+        fetch('/api/lucky-draw'),
+        fetch('/api/bulk-draw'),
+      ]);
+      const all = await ldRes.json();
+      const bulkAll = await bulkRes.json();
+
+      // IDs of participants who won via bulk draw — exclude from regular results
+      const bulkWinnerIds = new Set(
+        bulkAll.map(b => b.luckyDrawEntryId).filter(Boolean)
+      );
+      // Fallback: match by name if no ID stored
+      const bulkWinnerNames = new Set(bulkAll.map(b => b.participantName));
+
+      const isBulkWinner = (e) =>
+        bulkWinnerIds.has(e.id) || bulkWinnerNames.has(e.participantName);
+
       const pending = all.filter(e => e.status === 'PENDING')
                          .map(e => ({ id: e.id, name: e.participantName, subCommittee: e.subCommittee }));
-      const won = all.filter(e => e.status === 'WINNER')
+      const won = all.filter(e => e.status === 'WINNER' && !isBulkWinner(e))
                      .sort((a, b) => new Date(b.drawnAt) - new Date(a.drawnAt))
                      .map(e => ({ id: e.id, name: e.participantName, subCommittee: e.subCommittee }));
       setWheel(pending);
