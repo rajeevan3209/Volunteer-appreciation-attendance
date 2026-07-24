@@ -46,6 +46,16 @@ public class LuckyDrawController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    /** Bulk accept — mark as BULK_WINNER, removed from wheel but not shown in regular draw panel */
+    @PatchMapping("/{id}/bulk-accept")
+    public ResponseEntity<?> bulkAcceptWinner(@PathVariable Long id) {
+        return repo.findById(id).map(e -> {
+            e.setStatus(LuckyDrawEntry.Status.BULK_WINNER);
+            e.setDrawnAt(LocalDateTime.now());
+            return ResponseEntity.ok(repo.save(e));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     /** Exclude — mark as EXCLUDED, won't appear on wheel */
     @PatchMapping("/{id}/exclude")
     public ResponseEntity<?> excludeEntry(@PathVariable Long id) {

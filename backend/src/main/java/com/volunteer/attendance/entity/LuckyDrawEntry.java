@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class LuckyDrawEntry {
 
-    public enum Status { PENDING, WINNER, EXCLUDED }
+    public enum Status { PENDING, WINNER, BULK_WINNER, EXCLUDED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

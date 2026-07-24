@@ -432,7 +432,7 @@ export default function LuckyDrawBulk() {
         // Rank badge
         slide.addShape('ellipse', {
           x: cx, y: y + 0.12, w: BADGE_W, h: BADGE_W,
-          fill: { color: rank === 1 ? 'ff8f00' : '2e7d32' },
+          fill: { color: '2e7d32' },
           line: { color: 'ffffff', pt: 1 },
         });
         slide.addText(`${rank}`, {
