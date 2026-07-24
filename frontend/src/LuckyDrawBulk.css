@@ -266,6 +266,22 @@
 }
 .ldb-btn-ppt:hover { opacity: 0.85; }
 
+/* DOCX download button */
+.ldb-btn-docx {
+  background: #1565c0;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.ldb-btn-docx:hover { opacity: 0.85; }
+
 /* Move to next round button */
 .ldb-btn-next-round {
   background: #2e7d32;

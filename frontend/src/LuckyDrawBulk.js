@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PptxGenJS from 'pptxgenjs';
+import {
+  Document, Packer, Paragraph, Table, TableRow, TableCell,
+  TextRun, WidthType, AlignmentType, BorderStyle, HeadingLevel,
+  VerticalAlign,
+} from 'docx';
 import './LuckyDrawBulk.css';
 
 const COLORS = [
@@ -462,6 +467,104 @@ export default function LuckyDrawBulk() {
     prs.writeFile({ fileName: 'lucky-draw-results.pptx' });
   };
 
+  // ── DOCX export ───────────────────────────────────────────────────────────
+
+  const downloadDOCX = async () => {
+    const winners = allWinners;
+
+    const BORDER = { style: BorderStyle.SINGLE, size: 6, color: '2e7d32' };
+    const cellBorders = { top: BORDER, bottom: BORDER, left: BORDER, right: BORDER };
+
+    const headerCell = (text, width) => new TableCell({
+      width: { size: width, type: WidthType.DXA },
+      borders: cellBorders,
+      shading: { fill: '1b5e20' },
+      verticalAlign: VerticalAlign.CENTER,
+      children: [new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text, bold: true, color: 'FFFFFF', size: 22 })],
+      })],
+    });
+
+    const dataCell = (text, width) => new TableCell({
+      width: { size: width, type: WidthType.DXA },
+      borders: cellBorders,
+      verticalAlign: VerticalAlign.CENTER,
+      children: [new Paragraph({
+        alignment: AlignmentType.LEFT,
+        children: [new TextRun({ text, size: 20 })],
+      })],
+    });
+
+    const signatureCell = (width) => new TableCell({
+      width: { size: width, type: WidthType.DXA },
+      borders: cellBorders,
+      children: [new Paragraph({ children: [new TextRun({ text: '' })] })],
+    });
+
+    // 1 DXA = 1/20 pt; page width ~9360 DXA (A4 portrait, 1" margins each side)
+    const W_NO   = 700;
+    const W_NAME = 3200;
+    const W_SUB  = 3200;
+    const W_SIG  = 2260;
+
+    const headerRow = new TableRow({
+      tableHeader: true,
+      children: [
+        headerCell('No.', W_NO),
+        headerCell('Name', W_NAME),
+        headerCell('Sub-Committee', W_SUB),
+        headerCell('Signature', W_SIG),
+      ],
+    });
+
+    const dataRows = winners.map((w, i) => new TableRow({
+      children: [
+        dataCell(String(i + 1), W_NO),
+        dataCell(w.name, W_NAME),
+        dataCell(w.subCommittee, W_SUB),
+        signatureCell(W_SIG),
+      ],
+    }));
+
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: [
+          new Paragraph({
+            heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({
+              text: 'Volunteer Appreciation & Appointment Ceremony 2026',
+              bold: true, size: 28, color: '1b5e20',
+            })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text: 'Pasir Ris West · Lucky Draw Winners', size: 22, color: '388e3c' })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ text: `Round ${currentRoundNum}   ·   ${winners.length} winner(s)`, size: 20, color: '666666' })],
+          }),
+          new Paragraph({ children: [new TextRun({ text: '' })] }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [headerRow, ...dataRows],
+          }),
+        ],
+      }],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lucky-draw-round-${currentRoundNum}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   const totalWinners = rounds.reduce((s, r) => s + r.winners.length, 0);
@@ -589,9 +692,13 @@ export default function LuckyDrawBulk() {
                   <h2>🏆 Round {currentRoundNum} <span className="ldb-round-tally">({allWinners.length})</span></h2>
                   <div className="ldb-winners-actions">
                     {allWinners.length > 0 && (
-                      <button className="ldb-btn-ppt" onClick={downloadPPT} title="Download Round PPT">
-                        ⬇ PPT
-                      </button>
+                      <>
+                        <button className="ldb-btn-ppt" onClick={downloadPPT} title="Download Round PPT">
+                          ⬇ PPT
+                        </button>
+                        <button className="ldb-btn-docx" onClick={downloadDOCX} title="Download Word document">
+                          ⬇ DOCX
+                        </button>
                     )}
                     <button
                       className="ldb-btn-next-round"

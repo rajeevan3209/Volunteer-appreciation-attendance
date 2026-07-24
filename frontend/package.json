@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "docx": "^9.7.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "pptxgenjs": "^3.12.0",
