@@ -370,9 +370,9 @@ export default function Attendees() {
           <p>Pasir Ris West · Admin</p>
         </div>
         <div className="att-header-actions">
-          <button className="att-btn-icon" onClick={fetchAttendance} title="Refresh">↺</button>
-          <button className="att-btn-icon" onClick={handleExport} title="Export to Excel (.xlsx)" disabled={attendance.length === 0}>⬇ xlsx</button>
-          <button className="att-btn-icon" onClick={handleExportPdf} title="Export to PDF" disabled={attendance.length === 0}>⬇ pdf</button>
+          <button className="att-btn-icon att-btn-refresh" onClick={fetchAttendance} title="Refresh attendance list">↺</button>
+          <button className="att-btn-icon" onClick={handleExport} title="Export to Excel" disabled={attendance.length === 0}>⬇ Excel</button>
+          <button className="att-btn-icon" onClick={handleExportPdf} title="Export to PDF" disabled={attendance.length === 0}>⬇ PDF</button>
         </div>
       </header>
 
