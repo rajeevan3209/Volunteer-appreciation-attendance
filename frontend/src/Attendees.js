@@ -171,7 +171,7 @@ export default function Attendees() {
         <div className="att-summary">
           <div className="att-stat">
             <span className="att-stat-number">{attendance.length}</span>
-            <span className="att-stat-label">Registered</span>
+            <span className="att-stat-label">Attended</span>
           </div>
           <div className="att-stat att-stat--total">
             <span className="att-stat-number">{totalParticipants ?? '—'}</span>
