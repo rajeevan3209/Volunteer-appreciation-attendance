@@ -221,6 +221,8 @@
   color: #a5d6a7;
   font-size: 0.875rem;
   line-height: 1.5;
+  flex: 1;
+  min-height: 600px; /* matches 12-item list height */
 }
 
 /* Sponsors — always at the bottom of the panel */
