@@ -22,6 +22,11 @@ public class AttendanceController {
         return ResponseEntity.ok(attendanceService.getSubCommittees());
     }
 
+    @GetMapping("/participants/count")
+    public ResponseEntity<Map<String, Long>> getParticipantCount() {
+        return ResponseEntity.ok(Map.of("total", attendanceService.getTotalParticipants()));
+    }
+
     @GetMapping("/participants")
     public ResponseEntity<List<Map<String, Object>>> getParticipants(
             @RequestParam String subCommittee) {

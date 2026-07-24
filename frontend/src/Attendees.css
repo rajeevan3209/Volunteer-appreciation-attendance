@@ -85,6 +85,9 @@
   min-width: 80px;
 }
 
+.att-stat--total .att-stat-number { color: #1565c0; }
+.att-stat--pct   .att-stat-number { color: #e65100; }
+
 .att-stat-number {
   font-size: 2rem;
   font-weight: 800;

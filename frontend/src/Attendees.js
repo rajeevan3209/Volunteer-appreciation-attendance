@@ -6,6 +6,7 @@ const API = '';
 
 export default function Attendees() {
   const [attendance, setAttendance] = useState([]);
+  const [totalParticipants, setTotalParticipants] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
@@ -19,9 +20,14 @@ export default function Attendees() {
   const fetchAttendance = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/attendance`);
-      const data = await res.json();
+      const [attRes, countRes] = await Promise.all([
+        fetch(`${API}/api/attendance`),
+        fetch(`${API}/api/participants/count`),
+      ]);
+      const data = await attRes.json();
+      const countData = await countRes.json();
       setAttendance(data);
+      setTotalParticipants(countData.total);
       setLastRefreshed(new Date());
     } catch {
     } finally {
@@ -165,7 +171,17 @@ export default function Attendees() {
         <div className="att-summary">
           <div className="att-stat">
             <span className="att-stat-number">{attendance.length}</span>
-            <span className="att-stat-label">Total Attended</span>
+            <span className="att-stat-label">Registered</span>
+          </div>
+          <div className="att-stat att-stat--total">
+            <span className="att-stat-number">{totalParticipants ?? '—'}</span>
+            <span className="att-stat-label">Total Expected</span>
+          </div>
+          <div className="att-stat att-stat--pct">
+            <span className="att-stat-number">
+              {totalParticipants ? `${Math.round((attendance.length / totalParticipants) * 100)}%` : '—'}
+            </span>
+            <span className="att-stat-label">Attendance Rate</span>
           </div>
           <div className="att-stat">
             <span className="att-stat-number">{sortedGroups.length}</span>

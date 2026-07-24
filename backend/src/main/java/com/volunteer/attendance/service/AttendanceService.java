@@ -27,6 +27,10 @@ public class AttendanceService {
         return participantRepository.findDistinctSubCommittees();
     }
 
+    public long getTotalParticipants() {
+        return participantRepository.count();
+    }
+
     public List<Map<String, Object>> getParticipantsBySubCommittee(String subCommittee) {
         List<Participant> participants = participantRepository.findBySubCommitteeOrderByNameAsc(subCommittee);
         Set<String> attended = attendanceRepository.findAll()
