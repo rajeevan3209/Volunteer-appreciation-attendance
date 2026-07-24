@@ -14,8 +14,9 @@ function getCanvasSize() {
 
 export default function LuckyDrawBulk() {
   const [wheel, setWheel] = useState([]);
-  // rounds: [{ roundNum, winners: [{id, name, subCommittee}] }]
+  // rounds: [{ roundNum, winners: [{id, name, subCommittee}], prize }]
   const [rounds, setRounds] = useState([]);
+  const [currentRoundNum, setCurrentRoundNum] = useState(1);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
   const [canvasSize, setCanvasSize] = useState(getCanvasSize());
@@ -29,7 +30,7 @@ export default function LuckyDrawBulk() {
   const [flashWinner, setFlashWinner] = useState(null);
   const [bulkTotal, setBulkTotal] = useState(0);
   const [bulkPicked, setBulkPicked] = useState(0);
-  const [currentRoundDone, setCurrentRoundDone] = useState(false);
+  const [spinDone, setSpinDone] = useState(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -39,7 +40,7 @@ export default function LuckyDrawBulk() {
   const animFrameRef = useRef(null);
   const wheelRef = useRef([]);
   const pickedRef = useRef([]);
-  const roundNumRef = useRef(0);
+  const roundNumRef = useRef(1);
 
   useEffect(() => {
     const onResize = () => setCanvasSize(getCanvasSize());
@@ -97,11 +98,13 @@ export default function LuckyDrawBulk() {
         .map(([roundNum, winners]) => ({ roundNum, winners }));
       setRounds(loadedRounds);
 
-      // Seed round counter so new rounds continue from the last saved round
+      // Seed round counter from DB; start at 1 if no history
       const maxRound = loadedRounds.length > 0
         ? loadedRounds[loadedRounds.length - 1].roundNum
         : 0;
-      roundNumRef.current = maxRound;
+      const activeRound = Math.max(maxRound, 1);
+      roundNumRef.current = activeRound;
+      setCurrentRoundNum(activeRound);
     } catch {
       showToast('Failed to load data.');
     } finally {
@@ -258,12 +261,12 @@ export default function LuckyDrawBulk() {
 
   const runBulk = useCallback(async (count, prize) => {
     setSpinning(true);
-    setCurrentRoundDone(false);
+    setSpinDone(false);
     setBulkTotal(count);
     setBulkPicked(0);
     pickedRef.current = [];
 
-    roundNumRef.current += 1;
+    // Use the current round number (not incremented — stays same until "Move to next round")
     const thisRound = roundNumRef.current;
 
     setRounds(prev => [...prev, { roundNum: thisRound, winners: [], prize: prize || '' }]);
@@ -304,7 +307,7 @@ export default function LuckyDrawBulk() {
       if (i < count - 1) await new Promise(r => setTimeout(r, 400));
     }
 
-    setCurrentRoundDone(true);
+    setSpinDone(true);
     setSpinning(false);
     showToast(`${pickedRef.current.length} winner(s) selected!`, 'success');
   }, [spinOnce]);
@@ -330,7 +333,9 @@ export default function LuckyDrawBulk() {
   const handleCountKeyDown = (e) => { if (e.key === 'Enter') confirmCount(); };
 
   const moveToNextRound = async () => {
-    setCurrentRoundDone(false);
+    roundNumRef.current += 1;
+    setCurrentRoundNum(roundNumRef.current);
+    setSpinDone(false);
     await loadData();
   };
 
@@ -451,8 +456,9 @@ export default function LuckyDrawBulk() {
 
   const totalWinners = rounds.reduce((s, r) => s + r.winners.length, 0);
 
-  // Flat winner list for display: newest batch first, each batch reversed
-  const allWinners = rounds
+  // Current round's winners only — newest spin-batch first, within each batch reversed
+  const currentRoundBatches = rounds.filter(r => r.roundNum === currentRoundNum);
+  const allWinners = currentRoundBatches
     .slice().reverse()
     .flatMap(r => [...r.winners].reverse().map(w => ({ ...w, prize: r.prize })));
 
@@ -471,7 +477,7 @@ export default function LuckyDrawBulk() {
       <main className="ldb-main">
         {loading ? (
           <div className="ldb-state">⏳ Loading lucky draw…</div>
-        ) : wheel.length === 0 && totalWinners === 0 ? (
+        ) : wheel.length === 0 && allWinners.length === 0 && totalWinners === 0 ? (
           <div className="ldb-state">
             <p>No participants in the lucky draw yet.</p>
             <p className="ldb-state-sub">Participants are added when they mark attendance.</p>
@@ -562,27 +568,30 @@ export default function LuckyDrawBulk() {
                   </button>
                 </div>
 
-                {currentRoundDone && !spinning && (
-                  <div className="ldb-done-msg">
-                    🎉 Done!
-                    {wheel.length > 0 && (
-                      <button className="ldb-btn-reset" onClick={moveToNextRound}>
-                        Move to next round
-                      </button>
-                    )}
-                  </div>
+                {spinDone && !spinning && (
+                  <div className="ldb-done-msg">🎉 Spin complete!</div>
                 )}
               </div>
 
               {/* Results panel */}
               <div className="ldb-winners-col">
                 <div className="ldb-winners-header">
-                  <h2>🏆 Results ({totalWinners})</h2>
-                  {totalWinners > 0 && (
-                    <button className="ldb-btn-ppt" onClick={downloadPPT} title="Download as PowerPoint">
-                      ⬇ PPT
+                  <h2>🏆 Round {currentRoundNum} <span className="ldb-round-tally">({allWinners.length})</span></h2>
+                  <div className="ldb-winners-actions">
+                    {allWinners.length > 0 && (
+                      <button className="ldb-btn-ppt" onClick={downloadPPT} title="Download Round PPT">
+                        ⬇ PPT
+                      </button>
+                    )}
+                    <button
+                      className="ldb-btn-next-round"
+                      onClick={moveToNextRound}
+                      disabled={spinning}
+                      title="Move to next round"
+                    >
+                      Next Round →
                     </button>
-                  )}
+                  </div>
                 </div>
 
                 {allWinners.length === 0 ? (
