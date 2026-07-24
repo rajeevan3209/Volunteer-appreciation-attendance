@@ -261,7 +261,8 @@
   list-style: none;
   margin: 0;
   padding: 8px 0;
-  max-height: 600px; /* fits exactly 12 items at ~50px each */
+  min-height: 600px; /* holds 12-item height so sponsors stay pinned */
+  max-height: 600px;
   overflow-y: auto;
 }
 
