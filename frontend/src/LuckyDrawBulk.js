@@ -2,6 +2,32 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PptxGenJS from 'pptxgenjs';
 import './LuckyDrawBulk.css';
 
+const PRIZE_OPTIONS = [
+  '$20 Voucher',
+  '$30 Voucher',
+  '$40 Voucher',
+  'Table Fan',
+  'Hair Trimmer (Philips MG3730)',
+  'Mayer Rice Cooker (1.8L)',
+  'Tapo Security Camera (C220)',
+  'Mazer Portable Powerbank (MAG Air S)',
+  'Braun Food Chopper (CH3011)',
+  'Kodak Micro Digital Camera',
+  'Mazer Portable Powerbank (MAG Air20)',
+  'Mazer Portable Powerbank (MAG Air17)',
+  'Razer Gaming Headset (Blackshark V2X)',
+  'JBL Bluetooth Earbud (JBL Wave Bud 2)',
+  'Jogen Toaster (BT3211)',
+  'Hair Dryer (Tefal H6092)',
+  'Steam Iron (Tefal FV6672)',
+  'Braun Food Blender (Braun)',
+  'Airfryer (Tefal EY2458)',
+  'Wireless Gaming Headset (Logitech G435)',
+  'Knee Massager (SKG W3)',
+  'JBL Bluetooth Speaker (Charge 6)',
+  'GoPro Hero 13 Action Camera',
+];
+
 const COLORS = [
   '#1b5e20', '#2e7d32', '#388e3c', '#43a047', '#558b2f',
   '#33691e', '#4caf50', '#1a7c2a', '#2d6a2d', '#3d8b37',
@@ -26,6 +52,7 @@ export default function LuckyDrawBulk() {
   const [showNextRoundConfirm, setShowNextRoundConfirm] = useState(false);
   const [countInput, setCountInput] = useState('');
   const [prizeInput, setPrizeInput] = useState('');
+  const [prizeOther, setPrizeOther] = useState('');
   const [countError, setCountError] = useState('');
 
   const [flashWinner, setFlashWinner] = useState(null);
@@ -330,6 +357,7 @@ export default function LuckyDrawBulk() {
     if (wheel.length < 1) return;
     setCountInput('');
     setPrizeInput('');
+    setPrizeOther('');
     setCountError('');
     setShowCountModal(true);
   };
@@ -338,8 +366,9 @@ export default function LuckyDrawBulk() {
     const n = parseInt(countInput, 10);
     if (!n || n < 1) { setCountError('Please enter a number ≥ 1.'); return; }
     if (n > wheel.length) { setCountError(`Only ${wheel.length} participant(s) available.`); return; }
+    const prize = prizeInput === 'Other' ? prizeOther : prizeInput;
     setShowCountModal(false);
-    runBulk(n, prizeInput);
+    runBulk(n, prize);
   };
 
   const handleCountKeyDown = (e) => { if (e.key === 'Enter') confirmCount(); };
@@ -618,14 +647,28 @@ export default function LuckyDrawBulk() {
                     placeholder={`1 – ${wheel.length}`}
                   />
                   {countError && <p className="ldb-count-error">{countError}</p>}
-                  <input
+                  <select
                     className="ldb-prize-input"
-                    type="text"
                     value={prizeInput}
-                    onChange={e => setPrizeInput(e.target.value)}
-                    onKeyDown={handleCountKeyDown}
-                    placeholder="Prize name (optional)"
-                  />
+                    onChange={e => { setPrizeInput(e.target.value); setPrizeOther(''); }}
+                  >
+                    <option value="">— Select a prize (optional) —</option>
+                    {PRIZE_OPTIONS.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                    <option value="Other">Other…</option>
+                  </select>
+                  {prizeInput === 'Other' && (
+                    <input
+                      className="ldb-prize-input"
+                      type="text"
+                      value={prizeOther}
+                      onChange={e => setPrizeOther(e.target.value)}
+                      onKeyDown={handleCountKeyDown}
+                      placeholder="Enter prize name (optional)"
+                      autoFocus
+                    />
+                  )}
                   <div className="ldb-modal-actions">
                     <button className="ldb-btn-cancel" onClick={() => setShowCountModal(false)}>Cancel</button>
                     <button className="ldb-btn-start" onClick={confirmCount}>Start Spin</button>
