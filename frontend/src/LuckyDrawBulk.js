@@ -373,8 +373,9 @@ export default function LuckyDrawBulk() {
       fontSize: 14, color: LIGHT, align: 'center',
     });
 
-    // Flat winner list: newest batch first, each batch reversed (last spun = highest prize)
+    // Current round only, newest spin-batch first, within each batch reversed
     const allWinnersPpt = rounds
+      .filter(r => r.roundNum === currentRoundNum)
       .slice().reverse()
       .flatMap(r => [...r.winners].reverse().map(w => ({ ...w, prize: r.prize })));
 
