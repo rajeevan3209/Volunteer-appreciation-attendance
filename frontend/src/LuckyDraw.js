@@ -322,6 +322,15 @@ export default function LuckyDraw() {
                     ))}
                   </ol>
                 )}
+
+                {/* Sponsors */}
+                <div className="ld-sponsors">
+                  <p className="ld-sponsors-label">Sponsored by</p>
+                  <div className="ld-sponsors-logos">
+                    <img src="/rnr.jpeg"       alt="R&R Aero Services" />
+                    <img src="/mitsubishi.png"  alt="Mitsubishi Electric" />
+                  </div>
+                </div>
               </div>
             </div>
           </>
