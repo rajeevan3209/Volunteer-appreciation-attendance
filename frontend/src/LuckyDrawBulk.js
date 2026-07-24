@@ -41,6 +41,7 @@ export default function LuckyDrawBulk() {
   const wheelRef = useRef([]);
   const pickedRef = useRef([]);
   const roundNumRef = useRef(1);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     const onResize = () => setCanvasSize(getCanvasSize());
@@ -98,13 +99,16 @@ export default function LuckyDrawBulk() {
         .map(([roundNum, winners]) => ({ roundNum, winners }));
       setRounds(loadedRounds);
 
-      // Seed round counter from DB; start at 1 if no history
+      // Seed round counter from DB only on first load; subsequent calls preserve the user's current round
       const maxRound = loadedRounds.length > 0
         ? loadedRounds[loadedRounds.length - 1].roundNum
         : 0;
-      const activeRound = Math.max(maxRound, 1);
-      roundNumRef.current = activeRound;
-      setCurrentRoundNum(activeRound);
+      if (!initializedRef.current) {
+        const activeRound = Math.max(maxRound, 1);
+        roundNumRef.current = activeRound;
+        setCurrentRoundNum(activeRound);
+        initializedRef.current = true;
+      }
     } catch {
       showToast('Failed to load data.');
     } finally {
