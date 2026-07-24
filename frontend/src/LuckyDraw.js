@@ -7,8 +7,9 @@ const COLORS = [
 ];
 
 function getCanvasSize() {
-  // Fill available viewport — subtract header (~80px) and some padding
-  const available = Math.min(window.innerHeight - 120, window.innerWidth - 340);
+  // header ~80px + main padding 36px + meta row + gap ~56px = ~172px vertical overhead
+  // winners col 280px + gap 28px + main padding 40px = ~348px horizontal overhead
+  const available = Math.min(window.innerHeight - 180, window.innerWidth - 348);
   return Math.max(320, available);
 }
 
@@ -36,7 +37,11 @@ export default function LuckyDraw() {
   }, []);
 
   useEffect(() => {
-    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const onChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      // Recalculate canvas size after fullscreen transition completes
+      setTimeout(() => setCanvasSize(getCanvasSize()), 100);
+    };
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);

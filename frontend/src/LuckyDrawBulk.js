@@ -8,7 +8,7 @@ const COLORS = [
 ];
 
 function getCanvasSize() {
-  const available = Math.min(window.innerHeight - 120, window.innerWidth - 340);
+  const available = Math.min(window.innerHeight - 180, window.innerWidth - 348);
   return Math.max(320, available);
 }
 
@@ -48,7 +48,10 @@ export default function LuckyDrawBulk() {
   }, []);
 
   useEffect(() => {
-    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const onChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      setTimeout(() => setCanvasSize(getCanvasSize()), 100);
+    };
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
