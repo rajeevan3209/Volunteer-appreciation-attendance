@@ -23,8 +23,10 @@ export default function LuckyDrawBulk() {
 
   const [showCountModal, setShowCountModal] = useState(false);
   const [countInput, setCountInput] = useState('');
+  const [prizeInput, setPrizeInput] = useState('');
   const [countError, setCountError] = useState('');
   const [pptWarnCount, setPptWarnCount] = useState(null); // pending count awaiting PPT warning confirmation
+  const pendingPrizeRef = useRef('');
 
   const [flashWinner, setFlashWinner] = useState(null);
   const [bulkTotal, setBulkTotal] = useState(0);
@@ -256,7 +258,7 @@ export default function LuckyDrawBulk() {
 
   // ── Bulk run ──────────────────────────────────────────────────────────────
 
-  const runBulk = useCallback(async (count) => {
+  const runBulk = useCallback(async (count, prize) => {
     setSpinning(true);
     setCurrentRoundDone(false);
     setBulkTotal(count);
@@ -266,7 +268,7 @@ export default function LuckyDrawBulk() {
     roundNumRef.current += 1;
     const thisRound = roundNumRef.current;
 
-    setRounds(prev => [...prev, { roundNum: thisRound, winners: [] }]);
+    setRounds(prev => [...prev, { roundNum: thisRound, winners: [], prize: prize || '' }]);
 
     let remaining = [...wheelRef.current];
 
@@ -295,7 +297,7 @@ export default function LuckyDrawBulk() {
 
       setRounds(prev => prev.map(r =>
         r.roundNum === thisRound
-          ? { ...r, winners: [...r.winners, winner] }
+          ? { ...r, winners: [...r.winners, winner], prize: prize || '' }
           : r
       ));
 
@@ -314,6 +316,7 @@ export default function LuckyDrawBulk() {
   const openCountModal = () => {
     if (wheel.length < 1) return;
     setCountInput('');
+    setPrizeInput('');
     setCountError('');
     setShowCountModal(true);
   };
@@ -323,21 +326,22 @@ export default function LuckyDrawBulk() {
     if (!n || n < 1) { setCountError('Please enter a number ≥ 1.'); return; }
     if (n > wheel.length) { setCountError(`Only ${wheel.length} participant(s) available.`); return; }
     if (n > 10) {
-      // Show PPT formatting warning before proceeding
+      pendingPrizeRef.current = prizeInput;
       setPptWarnCount(n);
       return;
     }
     setShowCountModal(false);
-    runBulk(n);
+    runBulk(n, prizeInput);
   };
 
   const handleCountKeyDown = (e) => { if (e.key === 'Enter') confirmCount(); };
 
   const confirmPptWarn = () => {
     const n = pptWarnCount;
+    const prize = pendingPrizeRef.current;
     setPptWarnCount(null);
     setShowCountModal(false);
-    runBulk(n);
+    runBulk(n, prize);
   };
 
   const dismissPptWarn = () => {
@@ -378,23 +382,29 @@ export default function LuckyDrawBulk() {
     });
 
     rounds.forEach((round) => {
+      // Reverse so last spin = 1st prize, first spin = nth prize
+      const reversed = [...round.winners].reverse();
+      const hasPrize = !!round.prize;
+
       // Round header slide
       const hdr = prs.addSlide();
       hdr.background = { color: BG };
       hdr.addText(`Round ${round.roundNum}`, {
-        x: 0.5, y: 2.8, w: 12.33, h: 1.2,
+        x: 0.5, y: hasPrize ? 2.2 : 2.8, w: 12.33, h: 1.2,
         fontSize: 52, bold: true, color: GOLD, align: 'center',
       });
+      if (hasPrize) {
+        hdr.addText(round.prize, {
+          x: 0.5, y: 3.6, w: 12.33, h: 0.8,
+          fontSize: 28, bold: true, color: WHITE, align: 'center',
+        });
+      }
       hdr.addText(`${round.winners.length} winner(s)`, {
-        x: 0.5, y: 4.2, w: 12.33, h: 0.7,
+        x: 0.5, y: hasPrize ? 4.55 : 4.2, w: 12.33, h: 0.7,
         fontSize: 22, color: WHITE, align: 'center',
       });
 
       // Winners slides — 10 per slide, displayed as 2 columns of 5
-      // Layout: slide is 13.33" × 7.5"
-      //   Left column:  x=0.35,  column width=5.9"
-      //   Right column: x=6.75,  column width=5.9"
-      //   5 rows per column, rowH=1.1", startY=1.0"
       const PER_SLIDE = 10;
       const ROWS = 5;
       const COL_X = [0.35, 6.75];
@@ -403,8 +413,8 @@ export default function LuckyDrawBulk() {
       const rowH = 1.08;
       const startY = 1.05;
 
-      for (let s = 0; s < round.winners.length; s += PER_SLIDE) {
-        const slice = round.winners.slice(s, s + PER_SLIDE);
+      for (let s = 0; s < reversed.length; s += PER_SLIDE) {
+        const slice = reversed.slice(s, s + PER_SLIDE);
         const slide = prs.addSlide();
         slide.background = { color: 'f1f8e9' };
 
@@ -413,13 +423,16 @@ export default function LuckyDrawBulk() {
           x: 0, y: 0, w: 13.33, h: 0.72,
           fill: { color: '1b5e20' }, line: { color: '1b5e20', pt: 0 },
         });
-        slide.addText(`Round ${round.roundNum} — Winners`, {
+        const headerLabel = hasPrize
+          ? `Round ${round.roundNum} — ${round.prize}`
+          : `Round ${round.roundNum} — Winners`;
+        slide.addText(headerLabel, {
           x: 0.4, y: 0.1, w: 8, h: 0.52,
           fontSize: 18, bold: true, color: WHITE,
         });
-        const pageLabel = round.winners.length > PER_SLIDE
-          ? `(${s + 1}–${Math.min(s + PER_SLIDE, round.winners.length)} of ${round.winners.length})`
-          : `${round.winners.length} winner(s)`;
+        const pageLabel = reversed.length > PER_SLIDE
+          ? `(${s + 1}–${Math.min(s + PER_SLIDE, reversed.length)} of ${reversed.length})`
+          : `${reversed.length} winner(s)`;
         slide.addText(pageLabel, {
           x: 8.5, y: 0.1, w: 4.43, h: 0.52,
           fontSize: 13, color: 'a5d6a7', align: 'right',
@@ -432,35 +445,41 @@ export default function LuckyDrawBulk() {
         });
 
         slice.forEach((w, i) => {
-          const col = i < ROWS ? 0 : 1;        // left col: 0–4, right col: 5–9
+          const col = i < ROWS ? 0 : 1;
           const row = i < ROWS ? i : i - ROWS;
           const cx = COL_X[col];
           const y = startY + row * rowH;
-          const rank = s + i + 1;
+          const prizeRank = s + i + 1;
 
-          // Rank badge
+          // Rank badge (gold for 1st prize, green otherwise)
           slide.addShape('ellipse', {
             x: cx, y: y + 0.06, w: BADGE_W, h: BADGE_W,
-            fill: { color: rank === 1 ? 'ff8f00' : '2e7d32' },
+            fill: { color: prizeRank === 1 ? 'ff8f00' : '2e7d32' },
             line: { color: 'ffffff', pt: 1 },
           });
-          slide.addText(`${rank}`, {
+          slide.addText(`${prizeRank}`, {
             x: cx, y: y + 0.12, w: BADGE_W, h: BADGE_W - 0.1,
             fontSize: 13, bold: true, color: WHITE, align: 'center',
           });
 
-          // Name
+          // Name + optional prize label
+          const nameY = hasPrize ? y + 0.02 : y + 0.04;
           slide.addText(w.name, {
-            x: cx + BADGE_W + 0.1, y: y + 0.04, w: COL_W - BADGE_W - 0.15, h: 0.42,
+            x: cx + BADGE_W + 0.1, y: nameY, w: COL_W - BADGE_W - 0.15, h: 0.38,
             fontSize: 14, bold: true, color: '1b5e20',
           });
-          // Sub-committee
+          if (hasPrize) {
+            const medal = prizeRank === 1 ? '🥇' : prizeRank === 2 ? '🥈' : prizeRank === 3 ? '🥉' : `#${prizeRank}`;
+            slide.addText(`${medal} ${round.prize}`, {
+              x: cx + BADGE_W + 0.1, y: nameY + 0.37, w: COL_W - BADGE_W - 0.15, h: 0.24,
+              fontSize: 9, bold: true, color: 'b8860b',
+            });
+          }
           slide.addText(w.subCommittee, {
-            x: cx + BADGE_W + 0.1, y: y + 0.46, w: COL_W - BADGE_W - 0.15, h: 0.32,
+            x: cx + BADGE_W + 0.1, y: y + (hasPrize ? 0.62 : 0.46), w: COL_W - BADGE_W - 0.15, h: 0.28,
             fontSize: 10, color: '388e3c',
           });
 
-          // Separator line (within each column, between rows)
           const isLastInCol = (col === 0 && row === Math.min(ROWS, slice.length) - 1)
                            || (col === 1 && i === slice.length - 1);
           if (!isLastInCol) {
@@ -539,6 +558,14 @@ export default function LuckyDrawBulk() {
                         placeholder={`1 – ${wheel.length}`}
                       />
                       {countError && <p className="ldb-count-error">{countError}</p>}
+                      <input
+                        className="ldb-prize-input"
+                        type="text"
+                        value={prizeInput}
+                        onChange={e => setPrizeInput(e.target.value)}
+                        onKeyDown={handleCountKeyDown}
+                        placeholder="Prize name (optional)"
+                      />
                       <div className="ldb-modal-actions">
                         <button className="ldb-btn-cancel" onClick={() => setShowCountModal(false)}>Cancel</button>
                         <button className="ldb-btn-start" onClick={confirmCount}>Start Spin</button>
@@ -629,32 +656,45 @@ export default function LuckyDrawBulk() {
                   </div>
                 ) : (
                   <div className="ldb-rounds-container">
-                    {rounds.map((round) => (
-                      <div key={round.roundNum} className="ldb-round-block">
-                        <div className="ldb-round-label">
-                          Round {round.roundNum}
-                          <span className="ldb-round-count">{round.winners.length} winners</span>
-                        </div>
-                        <ol className="ldb-winners-list">
-                          {round.winners.map((w, i) => (
-                            <li
-                              key={w.id}
-                              className={`ldb-winner-item ${
+                    {rounds.map((round) => {
+                      // Reverse so last spin = 1st prize, first spin = nth prize
+                      const reversed = [...round.winners].reverse();
+                      const total = round.winners.length;
+                      const hasPrize = !!round.prize;
+                      return (
+                        <div key={round.roundNum} className="ldb-round-block">
+                          <div className="ldb-round-label">
+                            Round {round.roundNum}
+                            {hasPrize && <span className="ldb-round-prize">{round.prize}</span>}
+                            <span className="ldb-round-count">{total} winner{total !== 1 ? 's' : ''}</span>
+                          </div>
+                          <ol className="ldb-winners-list">
+                            {reversed.map((w, i) => {
+                              const prizeRank = i + 1;
+                              const spinRank = total - i; // original spin order
+                              const isLatest =
                                 round.roundNum === roundNumRef.current &&
-                                i === round.winners.length - 1 &&
-                                spinning ? 'latest' : ''
-                              }`}
-                            >
-                              <span className="ldb-winner-rank">{i + 1}</span>
-                              <span className="ldb-winner-info">
-                                <span className="ldb-winner-name">{w.name}</span>
-                                <span className="ldb-winner-sub">{w.subCommittee}</span>
-                              </span>
-                            </li>
-                          ))}
-                        </ol>
-                      </div>
-                    ))}
+                                spinRank === round.winners.length &&
+                                spinning;
+                              return (
+                                <li key={w.id} className={`ldb-winner-item ${isLatest ? 'latest' : ''}`}>
+                                  <span className="ldb-winner-rank">{prizeRank}</span>
+                                  <span className="ldb-winner-info">
+                                    {hasPrize && (
+                                      <span className="ldb-winner-prize-label">
+                                        {prizeRank === 1 ? '🥇' : prizeRank === 2 ? '🥈' : prizeRank === 3 ? '🥉' : `#${prizeRank}`} {round.prize}
+                                      </span>
+                                    )}
+                                    <span className="ldb-winner-name">{w.name}</span>
+                                    <span className="ldb-winner-sub">{w.subCommittee}</span>
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ol>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

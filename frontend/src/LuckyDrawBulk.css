@@ -291,6 +291,20 @@
   font-weight: 500;
   opacity: 0.85;
 }
+.ldb-round-prize {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255,255,255,0.22);
+  border-radius: 10px;
+  padding: 1px 8px;
+  letter-spacing: 0.2px;
+  text-transform: none;
+  flex: 1;
+  margin: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .ldb-winners-list {
   list-style: none;
@@ -327,6 +341,12 @@
   flex-direction: column;
   flex: 1;
   gap: 2px;
+}
+.ldb-winner-prize-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #b8860b;
+  line-height: 1.2;
 }
 .ldb-winner-name {
   font-size: 0.875rem;
@@ -386,6 +406,22 @@
   color: #81c784;
   margin-bottom: 20px;
 }
+.ldb-prize-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 2px solid #c8e6c9;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1b5e20;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+.ldb-prize-input:focus { border-color: #2e7d32; }
+.ldb-prize-input::placeholder { color: #a5d6a7; font-style: italic; }
+
 .ldb-count-input {
   width: 100%;
   padding: 12px 16px;
