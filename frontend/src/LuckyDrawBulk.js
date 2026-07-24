@@ -93,6 +93,7 @@ export default function LuckyDrawBulk() {
           id: row.id,
           name: row.participantName,
           subCommittee: row.subCommittee,
+          prize: row.prize || '',
         });
       });
       const loadedRounds = Array.from(roundMap.entries())
@@ -260,6 +261,7 @@ export default function LuckyDrawBulk() {
         rankInRound,
         participantName: winner.name,
         subCommittee: winner.subCommittee,
+        prize: winner.prize ?? '',
       }),
     });
   };
@@ -306,7 +308,7 @@ export default function LuckyDrawBulk() {
 
       setRounds(prev => prev.map(r =>
         r.batchId === thisBatch
-          ? { ...r, winners: [...r.winners, winner] }
+          ? { ...r, winners: [...r.winners, { ...winner, prize: prize || '' }] }
           : r
       ));
 
@@ -379,7 +381,7 @@ export default function LuckyDrawBulk() {
     const allWinnersPpt = rounds
       .filter(r => r.roundNum === currentRoundNum)
       .slice().reverse()
-      .flatMap(r => [...r.winners].reverse().map(w => ({ ...w, prize: r.prize })));
+      .flatMap(r => [...r.winners].reverse());
 
     // Winner slides — 30 per slide, 3 columns × 10 rows
     const PER_SLIDE = 30;
@@ -569,9 +571,10 @@ export default function LuckyDrawBulk() {
 
   // Current round's winners only — newest spin-batch first, within each batch reversed
   const currentRoundBatches = rounds.filter(r => r.roundNum === currentRoundNum);
+  // prize is stored on each winner (both in-session and loaded from DB)
   const allWinners = currentRoundBatches
     .slice().reverse()
-    .flatMap(r => [...r.winners].reverse().map(w => ({ ...w, prize: r.prize })));
+    .flatMap(r => [...r.winners].reverse());
 
   return (
     <div className="ldb-app" ref={appRef}>

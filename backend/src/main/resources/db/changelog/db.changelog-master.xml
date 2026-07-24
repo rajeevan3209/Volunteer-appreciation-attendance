@@ -10,5 +10,6 @@
     <include file="db/changelog/changes/003-create-lucky-draw.xml"/>
     <include file="db/changelog/changes/004-fix-lucky-draw-drawn-at.xml"/>
     <include file="db/changelog/changes/005-create-bulk-draw.xml"/>
+    <include file="db/changelog/changes/006-add-prize-to-bulk-draw.xml"/>
 
 </databaseChangeLog>

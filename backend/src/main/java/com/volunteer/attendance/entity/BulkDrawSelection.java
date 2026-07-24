@@ -28,6 +28,9 @@ public class BulkDrawSelection {
     @Column(nullable = false)
     private String subCommittee;
 
+    @Column(nullable = true)
+    private String prize;
+
     @Column(nullable = false)
     private LocalDateTime selectedAt;
 
