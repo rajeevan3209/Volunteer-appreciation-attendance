@@ -75,4 +75,16 @@ public class AttendanceService {
     public List<Attendance> getAllAttendance() {
         return attendanceRepository.findAllByOrderByMarkedAtDesc();
     }
+
+    @Transactional
+    public Map<String, Object> addParticipant(String name, String subCommittee) {
+        if (participantRepository.existsByName(name)) {
+            throw new IllegalStateException("A participant named \"" + name + "\" already exists.");
+        }
+        Participant p = new Participant();
+        p.setName(name);
+        p.setSubCommittee(subCommittee);
+        participantRepository.save(p);
+        return Map.of("message", "Participant added successfully.", "name", name, "subCommittee", subCommittee);
+    }
 }

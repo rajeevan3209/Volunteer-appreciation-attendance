@@ -49,4 +49,19 @@ public class AttendanceController {
     public ResponseEntity<List<Attendance>> getAllAttendance() {
         return ResponseEntity.ok(attendanceService.getAllAttendance());
     }
+
+    @PostMapping("/participants")
+    public ResponseEntity<?> addParticipant(@RequestBody Map<String, String> body) {
+        String name = body.get("name");
+        String subCommittee = body.get("subCommittee");
+        if (name == null || name.isBlank() || subCommittee == null || subCommittee.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Name and sub-committee are required."));
+        }
+        try {
+            Map<String, Object> result = attendanceService.addParticipant(name.trim(), subCommittee.trim());
+            return ResponseEntity.ok(result);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 }

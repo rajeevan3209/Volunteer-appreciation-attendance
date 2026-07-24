@@ -428,3 +428,45 @@
   .att-summary { gap: 16px; }
   .att-stat-number { font-size: 1.6rem; }
 }
+
+/* Add Participant */
+.att-btn-add {
+  background: #2e7d32;
+  color: #fff;
+  border-color: #2e7d32;
+  font-weight: 600;
+}
+.att-btn-add:hover { background: #1b5e20; border-color: #1b5e20; }
+
+.att-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.att-add-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.att-add-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.att-add-input:focus {
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
+}

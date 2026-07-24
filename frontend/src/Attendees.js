@@ -17,6 +17,14 @@ export default function Attendees() {
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
+  const [showAddParticipant, setShowAddParticipant] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newSubCommittee, setNewSubCommittee] = useState('');
+  const [newSubCommitteeOther, setNewSubCommitteeOther] = useState('');
+  const [addError, setAddError] = useState('');
+  const [addLoading, setAddLoading] = useState(false);
+  const [subCommittees, setSubCommittees] = useState([]);
+
   const ADMIN_PIN = '1986';
 
   const fetchAttendance = useCallback(async () => {
@@ -38,6 +46,42 @@ export default function Attendees() {
   }, []);
 
   useEffect(() => { fetchAttendance(); }, [fetchAttendance]);
+
+  useEffect(() => {
+    fetch(`${API}/api/subcommittees`).then(r => r.json()).then(setSubCommittees).catch(() => {});
+  }, []);
+
+  const openAddParticipant = () => {
+    setNewName('');
+    setNewSubCommittee('');
+    setNewSubCommitteeOther('');
+    setAddError('');
+    setShowAddParticipant(true);
+  };
+
+  const handleAddParticipant = async () => {
+    const sub = newSubCommittee === '__other__' ? newSubCommitteeOther.trim() : newSubCommittee;
+    if (!newName.trim()) { setAddError('Name is required.'); return; }
+    if (!sub) { setAddError('Sub-committee is required.'); return; }
+    setAddLoading(true);
+    setAddError('');
+    try {
+      const res = await fetch(`${API}/api/participants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim(), subCommittee: sub }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAddError(data.error || 'Failed to add participant.'); return; }
+      showToast(`${newName.trim()} added. They can now mark attendance.`);
+      setShowAddParticipant(false);
+      await fetchAttendance();
+    } catch {
+      setAddError('Network error. Please try again.');
+    } finally {
+      setAddLoading(false);
+    }
+  };
 
   const grouped = attendance.reduce((acc, a) => {
     if (!acc[a.subCommittee]) acc[a.subCommittee] = [];
@@ -259,12 +303,74 @@ export default function Attendees() {
         </div>
       )}
 
+      {/* Add Participant Modal */}
+      {showAddParticipant && (
+        <div className="att-overlay">
+          <div className="att-dialog">
+            <div className="att-dialog-icon">➕</div>
+            <h3 className="att-dialog-title">Add New Participant</h3>
+            <p className="att-dialog-msg">
+              This person will be added to the participant list and can then mark their attendance on the main page.
+            </p>
+
+            <div className="att-add-form">
+              <label className="att-add-label">Full Name</label>
+              <input
+                className="att-add-input"
+                type="text"
+                placeholder="Enter full name"
+                value={newName}
+                onChange={e => { setNewName(e.target.value); setAddError(''); }}
+                onKeyDown={e => e.key === 'Enter' && handleAddParticipant()}
+                autoFocus
+              />
+
+              <label className="att-add-label">Sub-Committee</label>
+              <select
+                className="att-add-input"
+                value={newSubCommittee}
+                onChange={e => { setNewSubCommittee(e.target.value); setAddError(''); }}
+              >
+                <option value="">— Select sub-committee —</option>
+                {subCommittees.map(sc => (
+                  <option key={sc} value={sc}>{sc}</option>
+                ))}
+                <option value="__other__">Other (type below)</option>
+              </select>
+
+              {newSubCommittee === '__other__' && (
+                <input
+                  className="att-add-input"
+                  type="text"
+                  placeholder="Enter sub-committee name"
+                  value={newSubCommitteeOther}
+                  onChange={e => { setNewSubCommitteeOther(e.target.value); setAddError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleAddParticipant()}
+                />
+              )}
+
+              {addError && <span className="att-pin-error-msg">{addError}</span>}
+            </div>
+
+            <div className="att-dialog-actions">
+              <button className="att-dialog-cancel" onClick={() => setShowAddParticipant(false)} disabled={addLoading}>
+                Cancel
+              </button>
+              <button className="att-dialog-confirm" onClick={handleAddParticipant} disabled={addLoading}>
+                {addLoading ? 'Adding…' : 'Add Participant'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="att-header">
         <div className="att-header-content">
           <h1>Welcome to Volunteer Appreciation &amp; Appointment Ceremony 2026</h1>
           <p>Pasir Ris West · Admin</p>
         </div>
         <div className="att-header-actions">
+          <button className="att-btn-icon att-btn-add" onClick={openAddParticipant} title="Add new participant">➕ Add Participant</button>
           <button className="att-btn-icon" onClick={fetchAttendance} title="Refresh">↺</button>
           <button className="att-btn-icon" onClick={handleExport} title="Export to Excel (.xlsx)" disabled={attendance.length === 0}>⬇ xlsx</button>
           <button className="att-btn-icon" onClick={handleExportPdf} title="Export to PDF" disabled={attendance.length === 0}>⬇ pdf</button>
