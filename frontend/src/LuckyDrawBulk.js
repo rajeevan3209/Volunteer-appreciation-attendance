@@ -248,7 +248,7 @@ export default function LuckyDrawBulk() {
   }, [drawWheel]);
 
   const acceptViaAPI = async (entry) => {
-    const res = await fetch(`/api/lucky-draw/${entry.id}/accept`, { method: 'PATCH' });
+    const res = await fetch(`/api/lucky-draw/${entry.id}/bulk-accept`, { method: 'PATCH' });
     if (!res.ok) throw new Error('API error');
   };
 
