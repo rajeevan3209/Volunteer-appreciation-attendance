@@ -50,6 +50,19 @@
   align-items: center;
   justify-content: center;
   padding: 20px 16px 32px;
+  position: relative;
+}
+
+/* PA logo — top-left corner of the main content area */
+.tree-pa-logo {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: clamp(80px, 12vw, 160px);
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 /* Outer container — fullscreen target */

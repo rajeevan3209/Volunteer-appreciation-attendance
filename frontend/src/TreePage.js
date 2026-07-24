@@ -162,6 +162,7 @@ export default function TreePage() {
       </header>
 
       <main className="tree-main">
+        <img src="/pa.jpg" alt="Pasir Ris West" className="tree-pa-logo" />
         <div className="tree-container" ref={containerRef}>
           <div className="tree-inner">
             <img src="/tree.png" alt="Tree" className="tree-img" draggable={false} />
