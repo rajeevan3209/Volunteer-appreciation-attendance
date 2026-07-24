@@ -104,9 +104,11 @@ export default function LuckyDrawBulk() {
         ? loadedRounds[loadedRounds.length - 1].roundNum
         : 0;
       if (!initializedRef.current) {
-        const activeRound = Math.max(maxRound, 1);
+        const stored = parseInt(localStorage.getItem('bulkDrawRound') || '0', 10);
+        const activeRound = Math.max(maxRound, stored, 1);
         roundNumRef.current = activeRound;
         setCurrentRoundNum(activeRound);
+        localStorage.setItem('bulkDrawRound', String(activeRound));
         initializedRef.current = true;
       }
     } catch {
@@ -338,6 +340,7 @@ export default function LuckyDrawBulk() {
 
   const moveToNextRound = async () => {
     roundNumRef.current += 1;
+    localStorage.setItem('bulkDrawRound', String(roundNumRef.current));
     setCurrentRoundNum(roundNumRef.current);
     setSpinDone(false);
     await loadData();
