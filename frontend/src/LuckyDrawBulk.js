@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PptxGenJS from 'pptxgenjs';
-import {
-  Document, Packer, Paragraph, Table, TableRow, TableCell,
-  TextRun, WidthType, AlignmentType, BorderStyle, HeadingLevel,
-  VerticalAlign,
-} from 'docx';
 import './LuckyDrawBulk.css';
 
 const COLORS = [
@@ -467,96 +462,99 @@ export default function LuckyDrawBulk() {
     prs.writeFile({ fileName: 'lucky-draw-results.pptx' });
   };
 
-  // ── DOCX export ───────────────────────────────────────────────────────────
+  // ── DOCX export (JSZip + raw OOXML — no extra packages) ──────────────────
 
   const downloadDOCX = async () => {
+    const JSZip = (await import('jszip')).default;
     const winners = allWinners;
 
-    const BORDER = { style: BorderStyle.SINGLE, size: 6, color: '2e7d32' };
-    const cellBorders = { top: BORDER, bottom: BORDER, left: BORDER, right: BORDER };
+    const esc = (s) => String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-    const headerCell = (text, width) => new TableCell({
-      width: { size: width, type: WidthType.DXA },
-      borders: cellBorders,
-      shading: { fill: '1b5e20' },
-      verticalAlign: VerticalAlign.CENTER,
-      children: [new Paragraph({
-        alignment: AlignmentType.CENTER,
-        children: [new TextRun({ text, bold: true, color: 'FFFFFF', size: 22 })],
-      })],
-    });
+    const GREEN  = '1b5e20';
+    const WHITE  = 'FFFFFF';
+    const BORDER = `<w:top w:val="single" w:sz="6" w:color="2e7d32"/><w:left w:val="single" w:sz="6" w:color="2e7d32"/><w:bottom w:val="single" w:sz="6" w:color="2e7d32"/><w:right w:val="single" w:sz="6" w:color="2e7d32"/>`;
 
-    const dataCell = (text, width) => new TableCell({
-      width: { size: width, type: WidthType.DXA },
-      borders: cellBorders,
-      verticalAlign: VerticalAlign.CENTER,
-      children: [new Paragraph({
-        alignment: AlignmentType.LEFT,
-        children: [new TextRun({ text, size: 20 })],
-      })],
-    });
+    const hdrCell = (text, w) => `
+      <w:tc>
+        <w:tcPr><w:tcW w:w="${w}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${GREEN}"/><w:tcBorders>${BORDER}</w:tcBorders><w:vAlign w:val="center"/></w:tcPr>
+        <w:p><w:pPr><w:jc w:val="center"/></w:pPr>
+          <w:r><w:rPr><w:b/><w:color w:val="${WHITE}"/><w:sz w:val="22"/></w:rPr><w:t>${esc(text)}</w:t></w:r>
+        </w:p>
+      </w:tc>`;
 
-    const signatureCell = (width) => new TableCell({
-      width: { size: width, type: WidthType.DXA },
-      borders: cellBorders,
-      children: [new Paragraph({ children: [new TextRun({ text: '' })] })],
-    });
+    const dataCell = (text, w) => `
+      <w:tc>
+        <w:tcPr><w:tcW w:w="${w}" w:type="dxa"/><w:tcBorders>${BORDER}</w:tcBorders><w:vAlign w:val="center"/></w:tcPr>
+        <w:p><w:r><w:rPr><w:sz w:val="20"/></w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r></w:p>
+      </w:tc>`;
 
-    // 1 DXA = 1/20 pt; page width ~9360 DXA (A4 portrait, 1" margins each side)
-    const W_NO   = 700;
-    const W_NAME = 3200;
-    const W_SUB  = 3200;
-    const W_SIG  = 2260;
+    const sigCell = (w) => `
+      <w:tc>
+        <w:tcPr><w:tcW w:w="${w}" w:type="dxa"/><w:tcBorders>${BORDER}</w:tcBorders></w:tcPr>
+        <w:p><w:r><w:t></w:t></w:r></w:p>
+      </w:tc>`;
 
-    const headerRow = new TableRow({
-      tableHeader: true,
-      children: [
-        headerCell('No.', W_NO),
-        headerCell('Name', W_NAME),
-        headerCell('Sub-Committee', W_SUB),
-        headerCell('Signature', W_SIG),
-      ],
-    });
+    const headerRow = `<w:tr><w:trPr><w:tblHeader/></w:trPr>${hdrCell('No.', 700)}${hdrCell('Name', 3200)}${hdrCell('Sub-Committee', 3200)}${hdrCell('Signature', 2260)}</w:tr>`;
 
-    const dataRows = winners.map((w, i) => new TableRow({
-      children: [
-        dataCell(String(i + 1), W_NO),
-        dataCell(w.name, W_NAME),
-        dataCell(w.subCommittee, W_SUB),
-        signatureCell(W_SIG),
-      ],
-    }));
+    const dataRows = winners.map((w, i) =>
+      `<w:tr>${dataCell(String(i + 1), 700)}${dataCell(w.name, 3200)}${dataCell(w.subCommittee, 3200)}${sigCell(2260)}</w:tr>`
+    ).join('');
 
-    const doc = new Document({
-      sections: [{
-        properties: {},
-        children: [
-          new Paragraph({
-            heading: HeadingLevel.HEADING_1,
-            alignment: AlignmentType.CENTER,
-            children: [new TextRun({
-              text: 'Volunteer Appreciation & Appointment Ceremony 2026',
-              bold: true, size: 28, color: '1b5e20',
-            })],
-          }),
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [new TextRun({ text: 'Pasir Ris West · Lucky Draw Winners', size: 22, color: '388e3c' })],
-          }),
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            children: [new TextRun({ text: `Round ${currentRoundNum}   ·   ${winners.length} winner(s)`, size: 20, color: '666666' })],
-          }),
-          new Paragraph({ children: [new TextRun({ text: '' })] }),
-          new Table({
-            width: { size: 100, type: WidthType.PERCENTAGE },
-            rows: [headerRow, ...dataRows],
-          }),
-        ],
-      }],
-    });
+    const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+  xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<w:body>
+  <w:p>
+    <w:pPr><w:jc w:val="center"/><w:pStyle w:val="Heading1"/></w:pPr>
+    <w:r><w:rPr><w:b/><w:color w:val="${GREEN}"/><w:sz w:val="28"/></w:rPr>
+      <w:t>Volunteer Appreciation &amp; Appointment Ceremony 2026</w:t>
+    </w:r>
+  </w:p>
+  <w:p>
+    <w:pPr><w:jc w:val="center"/></w:pPr>
+    <w:r><w:rPr><w:color w:val="388e3c"/><w:sz w:val="22"/></w:rPr>
+      <w:t>Pasir Ris West &#xB7; Lucky Draw Winners &#xB7; Round ${currentRoundNum} &#xB7; ${winners.length} winner(s)</w:t>
+    </w:r>
+  </w:p>
+  <w:p><w:r><w:t></w:t></w:r></w:p>
+  <w:tbl>
+    <w:tblPr>
+      <w:tblW w:w="9360" w:type="dxa"/>
+      <w:tblBorders>${BORDER}</w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>
+      <w:gridCol w:w="700"/><w:gridCol w:w="3200"/><w:gridCol w:w="3200"/><w:gridCol w:w="2260"/>
+    </w:tblGrid>
+    ${headerRow}${dataRows}
+  </w:tbl>
+  <w:sectPr>
+    <w:pgSz w:w="12240" w:h="15840"/>
+    <w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080"/>
+  </w:sectPr>
+</w:body>
+</w:document>`;
 
-    const blob = await Packer.toBlob(doc);
+    const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`;
+
+    const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', contentTypes);
+    zip.file('_rels/.rels', rels);
+    zip.file('word/document.xml', docXml);
+
+    const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
