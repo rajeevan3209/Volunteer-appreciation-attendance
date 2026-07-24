@@ -699,6 +699,7 @@ export default function LuckyDrawBulk() {
                         <button className="ldb-btn-docx" onClick={downloadDOCX} title="Download Word document">
                           ⬇ DOCX
                         </button>
+                      </>
                     )}
                     <button
                       className="ldb-btn-next-round"
