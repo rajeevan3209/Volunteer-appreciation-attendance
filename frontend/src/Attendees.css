@@ -270,6 +270,16 @@
   border-color: #90caf9;
 }
 
+.att-admin-btn.add-participant {
+  background: #2e7d32;
+  color: white;
+  border-color: #2e7d32;
+}
+.att-admin-btn.add-participant:hover:not(:disabled) {
+  background: #1b5e20;
+  border-color: #1b5e20;
+}
+
 /* Confirm overlay */
 .att-overlay {
   position: fixed;
@@ -429,14 +439,6 @@
   .att-stat-number { font-size: 1.6rem; }
 }
 
-/* Add Participant */
-.att-btn-add {
-  background: #2e7d32;
-  color: #fff;
-  border-color: #2e7d32;
-  font-weight: 600;
-}
-.att-btn-add:hover { background: #1b5e20; border-color: #1b5e20; }
 
 .att-add-form {
   display: flex;

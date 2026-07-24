@@ -370,7 +370,6 @@ export default function Attendees() {
           <p>Pasir Ris West · Admin</p>
         </div>
         <div className="att-header-actions">
-          <button className="att-btn-icon att-btn-add" onClick={openAddParticipant} title="Add new participant">➕ Add Participant</button>
           <button className="att-btn-icon" onClick={fetchAttendance} title="Refresh">↺</button>
           <button className="att-btn-icon" onClick={handleExport} title="Export to Excel (.xlsx)" disabled={attendance.length === 0}>⬇ xlsx</button>
           <button className="att-btn-icon" onClick={handleExportPdf} title="Export to PDF" disabled={attendance.length === 0}>⬇ pdf</button>
@@ -442,6 +441,12 @@ export default function Attendees() {
               onClick={handleReloadParticipants}
             >
               📋 Reload Participants
+            </button>
+            <button
+              className="att-admin-btn add-participant"
+              onClick={openAddParticipant}
+            >
+              ➕ Add Participant
             </button>
           </div>
         </div>
