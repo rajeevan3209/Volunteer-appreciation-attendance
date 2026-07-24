@@ -89,7 +89,7 @@
   pointer-events: none;
   opacity: 0;
   z-index: 2;
-  animation: settleIntoTree 1.2s ease-out forwards;
+  animation: settleIntoTree 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   letter-spacing: 0.1px;
   transform-origin: center center;
   line-height: 1;
