@@ -41,6 +41,7 @@ export default function LuckyDrawBulk() {
   const wheelRef = useRef([]);
   const pickedRef = useRef([]);
   const roundNumRef = useRef(1);
+  const batchIdRef = useRef(0);
   const initializedRef = useRef(false);
 
   useEffect(() => {
@@ -272,10 +273,11 @@ export default function LuckyDrawBulk() {
     setBulkPicked(0);
     pickedRef.current = [];
 
-    // Use the current round number (not incremented — stays same until "Move to next round")
     const thisRound = roundNumRef.current;
+    batchIdRef.current += 1;
+    const thisBatch = batchIdRef.current;
 
-    setRounds(prev => [...prev, { roundNum: thisRound, winners: [], prize: prize || '' }]);
+    setRounds(prev => [...prev, { roundNum: thisRound, batchId: thisBatch, winners: [], prize: prize || '' }]);
 
     let remaining = [...wheelRef.current];
 
@@ -303,8 +305,8 @@ export default function LuckyDrawBulk() {
       setBulkPicked(rank);
 
       setRounds(prev => prev.map(r =>
-        r.roundNum === thisRound
-          ? { ...r, winners: [...r.winners, winner], prize: prize || '' }
+        r.batchId === thisBatch
+          ? { ...r, winners: [...r.winners, winner] }
           : r
       ));
 
