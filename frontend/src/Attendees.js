@@ -50,16 +50,44 @@ export default function Attendees() {
   };
 
   const handleExport = () => {
-    const rows = attendance.map((a, i) => ({
+    const wb = XLSX.utils.book_new();
+    const now = new Date();
+    const rate = totalParticipants
+      ? `${Math.round((attendance.length / totalParticipants) * 100)}%` : '—';
+
+    // ── Sheet 1: Summary ──────────────────────────────────────────────────────
+    const summaryRows = [
+      ['Volunteer Appreciation & Appointment Ceremony 2026'],
+      ['Pasir Ris West'],
+      [],
+      ['Report Generated', now.toLocaleString()],
+      [],
+      ['ATTENDANCE SUMMARY'],
+      ['Attended',        attendance.length],
+      ['Total Expected',  totalParticipants ?? '—'],
+      ['Attendance Rate', rate],
+      ['Sub-Committees',  sortedGroups.length],
+      [],
+      ['BREAKDOWN BY SUB-COMMITTEE'],
+      ['Sub-Committee', 'Count'],
+      ...sortedGroups.map(g => [g, grouped[g].length]),
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{ wch: 28 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+    // ── Sheet 2: Participants ─────────────────────────────────────────────────
+    const detailRows = attendance.map((a, i) => ({
       '#': i + 1,
       Name: a.participantName,
       'Sub-Committee': a.subCommittee,
-      'Marked At': new Date(a.markedAt).toLocaleString(),
+      'Time Registered': new Date(a.markedAt).toLocaleString(),
     }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
-    XLSX.writeFile(wb, 'attendance.xlsx');
+    const wsDetail = XLSX.utils.json_to_sheet(detailRows);
+    wsDetail['!cols'] = [{ wch: 5 }, { wch: 30 }, { wch: 28 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(wb, wsDetail, 'Participants');
+
+    XLSX.writeFile(wb, `attendance-report-${now.toISOString().slice(0, 10)}.xlsx`);
   };
 
   const handleConfirm = async () => {
