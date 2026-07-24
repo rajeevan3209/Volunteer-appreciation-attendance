@@ -23,6 +23,7 @@ export default function LuckyDrawBulk() {
   const [toast, setToast] = useState(null);
 
   const [showCountModal, setShowCountModal] = useState(false);
+  const [showNextRoundConfirm, setShowNextRoundConfirm] = useState(false);
   const [countInput, setCountInput] = useState('');
   const [prizeInput, setPrizeInput] = useState('');
   const [countError, setCountError] = useState('');
@@ -344,6 +345,7 @@ export default function LuckyDrawBulk() {
   const handleCountKeyDown = (e) => { if (e.key === 'Enter') confirmCount(); };
 
   const moveToNextRound = async () => {
+    setShowNextRoundConfirm(false);
     roundNumRef.current += 1;
     localStorage.setItem('bulkDrawRound', String(roundNumRef.current));
     setCurrentRoundNum(roundNumRef.current);
@@ -632,6 +634,22 @@ export default function LuckyDrawBulk() {
               </div>
             )}
 
+            {/* Next round confirmation */}
+            {showNextRoundConfirm && (
+              <div className="ldb-overlay">
+                <div className="ldb-modal">
+                  <h2>Start Next Round?</h2>
+                  <p className="ldb-modal-sub">
+                    Current winners will be cleared from the display. This cannot be undone.
+                  </p>
+                  <div className="ldb-modal-actions">
+                    <button className="ldb-btn-cancel" onClick={() => setShowNextRoundConfirm(false)}>Cancel</button>
+                    <button className="ldb-btn-start" onClick={moveToNextRound}>Yes, Next Round</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Flash winner overlay */}
             {flashWinner && (
               <div className="ldb-overlay ldb-flash-overlay">
@@ -705,7 +723,7 @@ export default function LuckyDrawBulk() {
                     )}
                     <button
                       className="ldb-btn-next-round"
-                      onClick={moveToNextRound}
+                      onClick={() => setShowNextRoundConfirm(true)}
                       disabled={spinning}
                       title="Move to next round"
                     >
