@@ -404,14 +404,16 @@ export default function LuckyDrawBulk() {
         fontSize: 22, color: WHITE, align: 'center',
       });
 
-      // Winners slides — 10 per slide, displayed as 2 columns of 5
-      const PER_SLIDE = 10;
-      const ROWS = 5;
-      const COL_X = [0.35, 6.75];
-      const COL_W = 5.9;
-      const BADGE_W = 0.6;
-      const rowH = 1.08;
-      const startY = 1.05;
+      // Winners slides — 30 per slide, 3 columns × 10 rows
+      // Slide: 13.33" × 7.5", header bar: 0.72"
+      const PER_SLIDE = 30;
+      const ROWS = 10;
+      const NUM_COLS = 3;
+      const COL_W = 4.11;   // (13.33 - 0.3 left - 0.3 right - 2×0.1 gap) / 3
+      const COL_X = [0.3, 0.3 + COL_W + 0.1, 0.3 + 2 * (COL_W + 0.1)];
+      const BADGE_W = 0.42;
+      const startY = 0.82;
+      const rowH = (7.5 - startY - 0.08) / ROWS; // ~0.66"
 
       for (let s = 0; s < reversed.length; s += PER_SLIDE) {
         const slice = reversed.slice(s, s + PER_SLIDE);
@@ -427,65 +429,66 @@ export default function LuckyDrawBulk() {
           ? `Round ${round.roundNum} — ${round.prize}`
           : `Round ${round.roundNum} — Winners`;
         slide.addText(headerLabel, {
-          x: 0.4, y: 0.1, w: 8, h: 0.52,
+          x: 0.4, y: 0.1, w: 9, h: 0.52,
           fontSize: 18, bold: true, color: WHITE,
         });
         const pageLabel = reversed.length > PER_SLIDE
           ? `(${s + 1}–${Math.min(s + PER_SLIDE, reversed.length)} of ${reversed.length})`
           : `${reversed.length} winner(s)`;
         slide.addText(pageLabel, {
-          x: 8.5, y: 0.1, w: 4.43, h: 0.52,
+          x: 9.5, y: 0.1, w: 3.63, h: 0.52,
           fontSize: 13, color: 'a5d6a7', align: 'right',
         });
 
-        // Divider between columns
-        slide.addShape('line', {
-          x: 6.665, y: 0.85, w: 0, h: 6.4,
-          line: { color: 'c8e6c9', pt: 1 },
+        // Dividers between columns
+        [COL_X[1] - 0.05, COL_X[2] - 0.05].forEach(dx => {
+          slide.addShape('line', {
+            x: dx, y: 0.78, w: 0, h: 6.62,
+            line: { color: 'c8e6c9', pt: 1 },
+          });
         });
 
         slice.forEach((w, i) => {
-          const col = i < ROWS ? 0 : 1;
-          const row = i < ROWS ? i : i - ROWS;
+          const col = Math.floor(i / ROWS);
+          const row = i % ROWS;
           const cx = COL_X[col];
           const y = startY + row * rowH;
           const prizeRank = s + i + 1;
 
-          // Rank badge (gold for 1st prize, green otherwise)
+          // Rank badge
           slide.addShape('ellipse', {
-            x: cx, y: y + 0.06, w: BADGE_W, h: BADGE_W,
+            x: cx, y: y + 0.05, w: BADGE_W, h: BADGE_W,
             fill: { color: prizeRank === 1 ? 'ff8f00' : '2e7d32' },
             line: { color: 'ffffff', pt: 1 },
           });
           slide.addText(`${prizeRank}`, {
-            x: cx, y: y + 0.12, w: BADGE_W, h: BADGE_W - 0.1,
-            fontSize: 13, bold: true, color: WHITE, align: 'center',
+            x: cx, y: y + 0.09, w: BADGE_W, h: BADGE_W - 0.08,
+            fontSize: 11, bold: true, color: WHITE, align: 'center',
           });
 
-          // Name + optional prize label
-          const nameY = hasPrize ? y + 0.02 : y + 0.04;
+          // Name
+          const textX = cx + BADGE_W + 0.08;
+          const textW = COL_W - BADGE_W - 0.12;
           slide.addText(w.name, {
-            x: cx + BADGE_W + 0.1, y: nameY, w: COL_W - BADGE_W - 0.15, h: 0.38,
-            fontSize: 14, bold: true, color: '1b5e20',
+            x: textX, y: y + 0.03, w: textW, h: 0.3,
+            fontSize: 12, bold: true, color: '1b5e20',
           });
           if (hasPrize) {
             const medal = prizeRank === 1 ? '🥇' : prizeRank === 2 ? '🥈' : prizeRank === 3 ? '🥉' : `#${prizeRank}`;
             slide.addText(`${medal} ${round.prize}`, {
-              x: cx + BADGE_W + 0.1, y: nameY + 0.37, w: COL_W - BADGE_W - 0.15, h: 0.24,
-              fontSize: 9, bold: true, color: 'b8860b',
+              x: textX, y: y + 0.32, w: textW, h: 0.18,
+              fontSize: 8, bold: true, color: 'b8860b',
             });
           }
           slide.addText(w.subCommittee, {
-            x: cx + BADGE_W + 0.1, y: y + (hasPrize ? 0.62 : 0.46), w: COL_W - BADGE_W - 0.15, h: 0.28,
-            fontSize: 10, color: '388e3c',
+            x: textX, y: y + (hasPrize ? 0.49 : 0.33), w: textW, h: 0.18,
+            fontSize: 8, color: '388e3c',
           });
 
-          const isLastInCol = (col === 0 && row === Math.min(ROWS, slice.length) - 1)
-                           || (col === 1 && i === slice.length - 1);
-          if (!isLastInCol) {
+          // Row separator (not after last row in each column)
+          if (row < ROWS - 1 && i < slice.length - 1) {
             slide.addShape('line', {
-              x: cx + BADGE_W + 0.1, y: y + rowH - 0.05,
-              w: COL_W - BADGE_W - 0.15, h: 0,
+              x: cx, y: y + rowH - 0.03, w: COL_W, h: 0,
               line: { color: 'c8e6c9', pt: 0.5 },
             });
           }
