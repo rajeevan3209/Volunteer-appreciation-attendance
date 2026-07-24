@@ -104,32 +104,42 @@ export default function TreePage() {
 
       const newCanopy = [];
       const newTrunk = [];
-      newEntries.forEach((a, i) => {
+      newEntries.forEach((a) => {
         knownIdsRef.current.add(a.id);
         if (a.subCommittee?.split(',')[0].trim() === 'Leaders') {
           const pos = randomTrunkPos(trunkPlacedRef.current);
           trunkPlacedRef.current.push(pos);
           const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
-          // Cap stagger at 4 s for large batches so all names appear quickly
-          const delay = Math.min(i * (newEntries.length > 30 ? 20 : 150), 4000);
-          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay, color });
+          newTrunk.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, color });
         } else {
           const grid = canopyGridRef.current;
           const idx = canopyIndexRef.current;
           const pos = idx < grid.length ? grid[idx] : randomInCanopy();
           canopyIndexRef.current++;
           const color = NAME_COLORS[Math.floor(Math.random() * NAME_COLORS.length)];
-          const delay = Math.min(i * (newEntries.length > 30 ? 20 : 150), 4000);
-          newCanopy.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, delay, color });
+          newCanopy.push({ id: a.id, name: a.participantName, x: pos.x, y: pos.y, color });
         }
       });
 
-      if (newCanopy.length || newTrunk.length) {
-        setTimeout(() => {
-          if (newCanopy.length) setCanopyNames(prev => [...prev, ...newCanopy]);
-          if (newTrunk.length) setTrunkNames(prev => [...prev, ...newTrunk]);
-        }, 3000);
+      // Use JS timers to stagger insertions so each name's CSS animation fires
+      // immediately on DOM insertion — avoids CSS animation-delay being paused
+      // or reset by the browser during fullscreen transitions.
+      const isBulk = newEntries.length > 30;
+      const INITIAL_DELAY = isBulk ? 2000 : 500;
+      const BATCH_SIZE = isBulk ? 8 : 1;
+      const BATCH_INTERVAL = 150;
+
+      for (let b = 0; b * BATCH_SIZE < newCanopy.length; b++) {
+        const batch = newCanopy.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
+        setTimeout(() => setCanopyNames(prev => [...prev, ...batch]),
+          INITIAL_DELAY + b * BATCH_INTERVAL);
       }
+
+      newTrunk.forEach((n, i) => {
+        setTimeout(() => setTrunkNames(prev => [...prev, n]),
+          INITIAL_DELAY + i * 500);
+      });
+
     } catch {
       // silently retry
     }
@@ -152,9 +162,6 @@ export default function TreePage() {
   useEffect(() => {
     const onChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
-      // Force a re-render after the fullscreen transition completes so names
-      // reposition correctly relative to the resized tree-inner container.
-      setTimeout(() => setCanopyNames(prev => [...prev]), 350);
     };
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
@@ -179,7 +186,6 @@ export default function TreePage() {
                 style={{
                   left: `${n.x * 100}%`,
                   top: `${n.y * 100}%`,
-                  animationDelay: `${n.delay}ms`,
                   color: n.color,
                   textShadow: `0 0 3px #000, 0 0 6px rgba(0,0,0,0.85), 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000`,
                 }}
@@ -194,7 +200,6 @@ export default function TreePage() {
                 style={{
                   left: `${n.x * 100}%`,
                   top: `${n.y * 100}%`,
-                  animationDelay: `${n.delay}ms`,
                   color: n.color,
                 }}
               >
