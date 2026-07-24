@@ -86,8 +86,9 @@ export default function LuckyDrawBulk() {
       wheelRef.current = pending;
 
       // Rebuild rounds from persisted bulk draw history
+      // Sort by id (insertion order) so multiple spin batches within a round stay in the correct sequence
       const roundMap = new Map();
-      bulkAll.forEach(row => {
+      [...bulkAll].sort((a, b) => a.id - b.id).forEach(row => {
         if (!roundMap.has(row.roundNum)) roundMap.set(row.roundNum, []);
         roundMap.get(row.roundNum).push({
           id: row.id,
