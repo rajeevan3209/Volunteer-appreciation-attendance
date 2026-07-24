@@ -109,8 +109,8 @@
 }
 
 @keyframes settleIntoTree {
-  0%   { opacity: 0;   transform: translate(-50%, -50%) scale(2); }
-  20%  { opacity: 1;   transform: translate(-50%, -50%) scale(2); }
+  0%   { opacity: 0;   transform: translate(-50%, -50%) scale(4); }
+  20%  { opacity: 1;   transform: translate(-50%, -50%) scale(4); }
   70%  { opacity: 1;   transform: translate(-50%, -50%) scale(1.08); }
   85%  { opacity: 1;   transform: translate(-50%, -50%) scale(0.95); }
   100% { opacity: 1;   transform: translate(-50%, -50%) scale(1); }
