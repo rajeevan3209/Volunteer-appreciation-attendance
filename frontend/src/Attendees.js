@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import './Attendees.css';
 
 const API = '';
@@ -88,6 +90,80 @@ export default function Attendees() {
     XLSX.utils.book_append_sheet(wb, wsDetail, 'Participants');
 
     XLSX.writeFile(wb, `attendance-report-${now.toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const handleExportPdf = () => {
+    const now = new Date();
+    const rate = totalParticipants
+      ? `${Math.round((attendance.length / totalParticipants) * 100)}%` : '—';
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+
+    // Header
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Volunteer Appreciation & Appointment Ceremony 2026', pageW / 2, 18, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Pasir Ris West', pageW / 2, 25, { align: 'center' });
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Report generated: ${now.toLocaleString()}`, pageW / 2, 31, { align: 'center' });
+    doc.setTextColor(0);
+
+    // Stats table
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Attendance Summary', 14, 40);
+    autoTable(doc, {
+      startY: 43,
+      head: [['Metric', 'Value']],
+      body: [
+        ['Attended',        String(attendance.length)],
+        ['Total Expected',  String(totalParticipants ?? '—')],
+        ['Attendance Rate', rate],
+        ['Sub-Committees',  String(sortedGroups.length)],
+      ],
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [46, 125, 50] },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+      margin: { left: 14, right: 14 },
+    });
+
+    // Breakdown by sub-committee
+    const afterStats = doc.lastAutoTable.finalY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Breakdown by Sub-Committee', 14, afterStats);
+    autoTable(doc, {
+      startY: afterStats + 3,
+      head: [['Sub-Committee', 'Count']],
+      body: sortedGroups.map(g => [g, grouped[g].length]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [46, 125, 50] },
+      margin: { left: 14, right: 14 },
+    });
+
+    // Participants list
+    const afterBreakdown = doc.lastAutoTable.finalY + 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Participants', 14, afterBreakdown);
+    autoTable(doc, {
+      startY: afterBreakdown + 3,
+      head: [['#', 'Name', 'Sub-Committee', 'Time Registered']],
+      body: attendance.map((a, i) => [
+        i + 1,
+        a.participantName,
+        a.subCommittee,
+        new Date(a.markedAt).toLocaleString(),
+      ]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [46, 125, 50] },
+      columnStyles: { 0: { cellWidth: 10 }, 3: { cellWidth: 38 } },
+      margin: { left: 14, right: 14 },
+    });
+
+    doc.save(`attendance-report-${now.toISOString().slice(0, 10)}.pdf`);
   };
 
   const handleConfirm = async () => {
@@ -190,7 +266,8 @@ export default function Attendees() {
         </div>
         <div className="att-header-actions">
           <button className="att-btn-icon" onClick={fetchAttendance} title="Refresh">↺</button>
-          <button className="att-btn-icon" onClick={handleExport} title="Export to Excel" disabled={attendance.length === 0}>⬇</button>
+          <button className="att-btn-icon" onClick={handleExport} title="Export to Excel (.xlsx)" disabled={attendance.length === 0}>⬇ xlsx</button>
+          <button className="att-btn-icon" onClick={handleExportPdf} title="Export to PDF" disabled={attendance.length === 0}>⬇ pdf</button>
         </div>
       </header>
 
