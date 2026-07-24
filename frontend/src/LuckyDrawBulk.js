@@ -496,10 +496,10 @@ export default function LuckyDrawBulk() {
         <w:p><w:r><w:t></w:t></w:r></w:p>
       </w:tc>`;
 
-    const headerRow = `<w:tr><w:trPr><w:tblHeader/></w:trPr>${hdrCell('No.', 700)}${hdrCell('Name', 3200)}${hdrCell('Sub-Committee', 3200)}${hdrCell('Signature', 2260)}</w:tr>`;
+    const headerRow = `<w:tr><w:trPr><w:tblHeader/></w:trPr>${hdrCell('No.', 600)}${hdrCell('Name', 2800)}${hdrCell('Sub-Committee', 2600)}${hdrCell('Prize', 1760)}${hdrCell('Signature', 1600)}</w:tr>`;
 
     const dataRows = winners.map((w, i) =>
-      `<w:tr>${dataCell(String(i + 1), 700)}${dataCell(w.name, 3200)}${dataCell(w.subCommittee, 3200)}${sigCell(2260)}</w:tr>`
+      `<w:tr>${dataCell(String(i + 1), 600)}${dataCell(w.name, 2800)}${dataCell(w.subCommittee, 2600)}${dataCell(w.prize || '', 1760)}${sigCell(1600)}</w:tr>`
     ).join('');
 
     const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -516,7 +516,7 @@ export default function LuckyDrawBulk() {
   <w:p>
     <w:pPr><w:jc w:val="center"/></w:pPr>
     <w:r><w:rPr><w:color w:val="388e3c"/><w:sz w:val="22"/></w:rPr>
-      <w:t>Pasir Ris West &#xB7; Lucky Draw Winners &#xB7; Round ${currentRoundNum} &#xB7; ${winners.length} winner(s)</w:t>
+      <w:t>Pasir Ris West &#xB7; Lucky Draw Winners &#xB7; ${winners.length} winner(s)</w:t>
     </w:r>
   </w:p>
   <w:p><w:r><w:t></w:t></w:r></w:p>
@@ -526,7 +526,7 @@ export default function LuckyDrawBulk() {
       <w:tblBorders>${BORDER}</w:tblBorders>
     </w:tblPr>
     <w:tblGrid>
-      <w:gridCol w:w="700"/><w:gridCol w:w="3200"/><w:gridCol w:w="3200"/><w:gridCol w:w="2260"/>
+      <w:gridCol w:w="600"/><w:gridCol w:w="2800"/><w:gridCol w:w="2600"/><w:gridCol w:w="1760"/><w:gridCol w:w="1600"/>
     </w:tblGrid>
     ${headerRow}${dataRows}
   </w:tbl>
