@@ -18,17 +18,16 @@ const NAME_COLORS = [
 ];
 
 // Canopy zones — calibrated to the actual leaf boundary in the tree image.
-// Do NOT expand these: the upper-left/right zones already reach the sky edge.
 const ZONES = [
-  { cx: 0.50, cy: 0.26, rx: 0.12, ry: 0.06 },  // top crown
-  { cx: 0.38, cy: 0.33, rx: 0.11, ry: 0.08 },  // upper-left
-  { cx: 0.62, cy: 0.33, rx: 0.11, ry: 0.08 },  // upper-right
-  { cx: 0.50, cy: 0.39, rx: 0.15, ry: 0.09 },  // centre bulk
-  { cx: 0.36, cy: 0.44, rx: 0.09, ry: 0.07 },  // mid-left
-  { cx: 0.64, cy: 0.44, rx: 0.09, ry: 0.07 },  // mid-right
-  { cx: 0.31, cy: 0.49, rx: 0.07, ry: 0.04 },  // lower-left branch
-  { cx: 0.50, cy: 0.48, rx: 0.10, ry: 0.04 },  // lower-centre
-  { cx: 0.69, cy: 0.49, rx: 0.07, ry: 0.04 },  // lower-right branch
+  { cx: 0.50, cy: 0.28, rx: 0.11, ry: 0.05 },  // top crown (tighter, avoids sky)
+  { cx: 0.42, cy: 0.35, rx: 0.09, ry: 0.07 },  // upper-left (shifted right+down, away from sky)
+  { cx: 0.58, cy: 0.35, rx: 0.09, ry: 0.07 },  // upper-right (shifted left+down, away from sky)
+  { cx: 0.50, cy: 0.41, rx: 0.15, ry: 0.08 },  // centre bulk
+  { cx: 0.37, cy: 0.46, rx: 0.10, ry: 0.07 },  // mid-left
+  { cx: 0.63, cy: 0.46, rx: 0.10, ry: 0.07 },  // mid-right
+  { cx: 0.27, cy: 0.51, rx: 0.09, ry: 0.06 },  // lower-left lobe (expanded to fill green gap)
+  { cx: 0.50, cy: 0.50, rx: 0.11, ry: 0.05 },  // lower-centre
+  { cx: 0.73, cy: 0.51, rx: 0.09, ry: 0.06 },  // lower-right lobe (expanded to fill green gap)
 ];
 
 // Pre-build a shuffled staggered grid (~290 slots).
@@ -38,7 +37,7 @@ function buildCanopyGrid() {
   const Y_STEP = 0.010;
   const positions = [];
   let row = 0;
-  for (let y = 0.21; y <= 0.535; y += Y_STEP, row++) {
+  for (let y = 0.23; y <= 0.56; y += Y_STEP, row++) {
     const xOff = (row % 2) * (X_STEP / 2);
     for (let x = 0.20 + xOff; x <= 0.85; x += X_STEP) {
       for (const zone of ZONES) {
